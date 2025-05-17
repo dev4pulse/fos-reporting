@@ -11,6 +11,7 @@ import java.time.format.DateTimeFormatter;
 
 @Service
 public class ReportService {
+    public static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
     @Autowired
     private SalesRepository salesRepository;
@@ -18,15 +19,22 @@ public class ReportService {
         try {
         entryProduct.getProducts().forEach(product -> {
             Sales sales = new Sales();
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
-            sales.setDateTime(LocalDateTime.parse(entryProduct.getDate(), formatter) );
+            sales.setDateTime(LocalDateTime.parse(entryProduct.getDate(), formatter));
+            sales.setProductName(product.getProductName());
+            sales.setSubProduct(product.getSubProduct());
             sales.setEmployeeId(entryProduct.getEmployeeId());
+            Sales recentSale = salesRepository.findTopByProductNameAndSubProductOrderByDateTimeDesc(sales.getProductName(),sales.getSubProduct());
             sales.setClosingStock(product.getClosing());
+            float closingStock = 0;
+            if (recentSale != null) {
+                closingStock = recentSale.getClosingStock();
+            }
+            sales.setOpeningStock(closingStock);
             sales.setTestingTotal(product.getTesting());
-          //  sales.setSale(product)
-            sales.setCost(product.getPrice());
-            //sales.setInventory(product.get)
-
+            float sale = product.getClosing() - closingStock - product.getTesting();
+            sales.setSale(sale);
+            sales.setPrice(product.getPrice());
+            sales.setSaleAmount(sale * product.getPrice());
             salesRepository.save(sales);
         });
             return true;

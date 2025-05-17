@@ -19,13 +19,15 @@ public class Sales {
     private Long id;
     @NotNull
     private LocalDateTime dateTime;
-    private int productId;
+    @NotNull
+    private String productName;
+    private String subProduct;
     @NotNull
     private int employeeId;
-    private int openingStock;
-    private int closingStock;
-    private int testingTotal;
-    private int sale;
-    private int cost;
-    private int inventory;
+    private float openingStock;
+    private float closingStock;
+    private float testingTotal;
+    private float sale;
+    private float price;
+    private float saleAmount;
 }
