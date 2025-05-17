@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Service
 public class ReportService {
 
@@ -16,6 +18,8 @@ public class ReportService {
         try {
         entryProduct.getProducts().forEach(product -> {
             Sales sales = new Sales();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+            sales.setDateTime(LocalDateTime.parse(entryProduct.getDate(), formatter) );
             sales.setEmployeeId(entryProduct.getEmployeeId());
             sales.setClosingStock(product.getClosing());
             sales.setTestingTotal(product.getTesting());

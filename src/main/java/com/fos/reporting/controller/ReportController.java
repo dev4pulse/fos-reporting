@@ -28,11 +28,11 @@ public class ReportController {
         }
     }
 
-    @PostMapping("/product")
+    @PostMapping("/sales")
     public ResponseEntity<String> addEntry(@RequestBody @Validated EntryProduct entryProduct) {
         try {
             reportService.addToSales(entryProduct);
-            return new ResponseEntity<>("test from report service", HttpStatus.OK);
+            return new ResponseEntity<>("added to sales", HttpStatus.OK);
         } catch (Exception e) {
             System.out.println("e" + e);
             return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
