@@ -12,16 +12,22 @@ import java.time.LocalDateTime;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Collections {
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private LocalDateTime dateTime;
-    private int employeeId;
-    private int cash;
-    private int phonePay;
-    private int cc;
-    private int debt;
-    private int badHandling;
-    private int amountUsed;
+    private float employeeId;
+    private float cashReceived;
+    private float phonePay;
+    private float creditCard;
+    private float borrowedAmount;
+    private float debtRecovered;
+    private String borrower;
+    private float badHandling;
+    private float expenses;
+    private double expectedTotal;
+    private double receivedTotal;
+    private double difference;
 }

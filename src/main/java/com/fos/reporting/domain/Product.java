@@ -13,6 +13,7 @@ public class Product {
     private String productName;
     private String subProduct;
     private float closing;
+    private float opening;
     @NotNull
     private float price;
     private float testing;
