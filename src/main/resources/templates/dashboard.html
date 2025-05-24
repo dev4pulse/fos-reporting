@@ -1,32 +1,68 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Dashboard Entry</title>
+    <title>Sales & Collections Entry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script>
+         function addProductRow() {
+        const container = document.getElementById("products");
+        const div = document.createElement("div");
+        div.className = "row g-2 mb-3 product-group border rounded p-3 bg-light position-relative";
+
+        div.innerHTML = `
+            <div class="col-md-4">
+                <input type="text" class="form-control" placeholder="Product Name" required>
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control" placeholder="Sub Product">
+            </div>
+            <div class="col-md-2">
+                <input type="number" step="any" class="form-control" placeholder="Opening">
+            </div>
+            <div class="col-md-2">
+                <input type="number" step="any" class="form-control" placeholder="Closing">
+            </div>
+            <div class="col-md-4">
+                <input type="number" step="any" class="form-control" placeholder="Price" required>
+            </div>
+            <div class="col-md-4">
+                <input type="number" step="any" class="form-control" placeholder="Testing">
+            </div>
+            <div class="col-md-4 text-end">
+                <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="removeProductRow(this)">Remove</button>
+            </div>
+        `;
+
+        container.appendChild(div);
+    }
+
+    function removeProductRow(button) {
+        button.closest('.product-group').remove();
+    }
+
         function collectProducts() {
-            const productGroups = document.querySelectorAll(".product-group");
+            const groups = document.querySelectorAll(".product-group");
             const products = [];
 
-            productGroups.forEach(group => {
+            groups.forEach(group => {
                 const inputs = group.querySelectorAll("input");
-                const product = {
+                products.push({
                     productName: inputs[0].value,
                     subProduct: inputs[1].value,
                     opening: parseFloat(inputs[2].value || 0),
                     closing: parseFloat(inputs[3].value || 0),
                     price: parseFloat(inputs[4].value),
                     testing: parseFloat(inputs[5].value || 0)
-                };
-                products.push(product);
+                });
             });
 
             return products;
         }
 
-        function submitSalesForm(event) {
+        function submitSales(event) {
+        
             event.preventDefault();
-
-            const salesData = {
+            const data = {
                 date: document.getElementById("salesDate").value,
                 employeeId: parseInt(document.getElementById("salesEmployeeId").value),
                 products: collectProducts()
@@ -35,17 +71,15 @@
             fetch('/sales', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(salesData)
-            })
-            .then(res => res.text())
-            .then(msg => alert("Sales Submitted: " + msg))
-            .catch(err => alert("Sales Error: " + err));
+                body: JSON.stringify(data)
+            }).then(res => res.text())
+              .then(msg => alert("Sales Saved: " + msg))
+              .catch(err => alert("Error: " + err));
         }
 
-        function submitCollectionsForm(event) {
+        function submitCollections(event) {
             event.preventDefault();
-
-            const collectionsData = {
+            const data = {
                 date: document.getElementById("collectionsDate").value,
                 employeeId: parseInt(document.getElementById("collectionsEmployeeId").value),
                 cashReceived: parseFloat(document.getElementById("cashReceived").value || 0),
@@ -64,100 +98,70 @@
             fetch('/collections', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(collectionsData)
-            })
-            .then(res => res.text())
-            .then(msg => alert("Collections Submitted: " + msg))
-            .catch(err => alert("Collections Error: " + err));
+                body: JSON.stringify(data)
+            }).then(res => res.text())
+              .then(msg => alert("Collections Saved: " + msg))
+              .catch(err => alert("Error: " + err));
         }
 
-        function addProductRow() {
-            const container = document.getElementById("products");
-
-            const div = document.createElement("div");
-            div.className = "product-group";
-            div.innerHTML = `
-                <hr>
-                <label>Product Name:</label>
-                <input type="text" required><br>
-                <label>Sub Product:</label>
-                <input type="text"><br>
-                <label>Opening:</label>
-                <input type="number" step="any"><br>
-                <label>Closing:</label>
-                <input type="number" step="any"><br>
-                <label>Price:</label>
-                <input type="number" step="any" required><br>
-                <label>Testing:</label>
-                <input type="number" step="any"><br>
-            `;
-            container.appendChild(div);
-        }
-
-        window.onload = () => {
-            addProductRow(); // default one product row
-        };
+        window.onload = () => addProductRow();
     </script>
 </head>
-<body>
+<body class="bg-body-tertiary">
 
-<h1>Dashboard Entry</h1>
+<div class="container py-4">
+    <h2 class="mb-4">Sales & Collections Dashboard</h2>
 
-<!-- Sales Entry Form -->
-<h2>Sales Entry</h2>
-<form id="salesForm" onsubmit="submitSalesForm(event)">
-    <label>Date:</label>
-    <input type="text" id="salesDate" required><br>
+    <!-- Sales Form -->
+    <form onsubmit="submitSales(event)" class="mb-5 border p-4 rounded bg-white shadow-sm">
+        <h4>Sales Entry</h4>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <input type="text" class="form-control" id="salesDate" placeholder="Date" required>
+            </div>
+            <div class="col-md-6">
+                <input type="number" class="form-control" id="salesEmployeeId" placeholder="Employee ID" required>
+            </div>
+        </div>
 
-    <label>Employee ID:</label>
-    <input type="number" id="salesEmployeeId" required><br>
+        <div id="products"></div>
+        <button type="button" class="btn btn-outline-primary mt-2" onclick="addProductRow()">Add Product</button>
+        <button type="submit" class="btn btn-success mt-2 float-end">Submit Sales</button>
+    </form>
 
-    <div id="products"></div>
-    <button type="button" onclick="addProductRow()">Add Product</button><br><br>
+    <!-- Collections Form -->
+    <form onsubmit="submitCollections(event)" class="border p-4 rounded bg-white shadow-sm">
+        <h4>Collections Entry</h4>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <input type="text" class="form-control" id="collectionsDate" placeholder="Date" required>
+            </div>
+            <div class="col-md-6">
+                <input type="number" class="form-control" id="collectionsEmployeeId" placeholder="Employee ID" required>
+            </div>
+        </div>
 
-    <button type="submit">Submit Sales</button>
-</form>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6"><input type="number" step="any" class="form-control" id="cashReceived" placeholder="Cash Received"></div>
+            <div class="col-md-6"><input type="text" class="form-control" id="cashReceivedStatus" placeholder="Cash Received Status"></div>
 
-<hr>
+            <div class="col-md-6"><input type="number" step="any" class="form-control" id="phonePay" placeholder="Phone Pay"></div>
+            <div class="col-md-6"><input type="text" class="form-control" id="phonePayStatus" placeholder="Phone Pay Status"></div>
 
-<!-- Collections Entry Form -->
-<h2>Collections Entry</h2>
-<form id="collectionsForm" onsubmit="submitCollectionsForm(event)">
-    <label>Date:</label>
-    <input type="text" id="collectionsDate" required><br>
+            <div class="col-md-6"><input type="number" step="any" class="form-control" id="creditCard" placeholder="Credit Card"></div>
+            <div class="col-md-6"><input type="text" class="form-control" id="creditCardStatus" placeholder="Credit Card Status"></div>
 
-    <label>Employee ID:</label>
-    <input type="number" id="collectionsEmployeeId" required><br>
+            <div class="col-md-6"><input type="number" step="any" class="form-control" id="borrowedAmount" placeholder="Borrowed Amount"></div>
+            <div class="col-md-6"><input type="number" step="any" class="form-control" id="debtRecovered" placeholder="Debt Recovered"></div>
 
-    <label>Cash Received:</label>
-    <input type="number" step="any" id="cashReceived"><br>
-    <label>Cash Received Status:</label>
-    <input type="text" id="cashReceivedStatus"><br>
+            <div class="col-md-6"><input type="text" class="form-control" id="borrower" placeholder="Borrower Name"></div>
+            <div class="col-md-6"><input type="number" step="any" class="form-control" id="badHandling" placeholder="Bad Handling"></div>
+            <div class="col-md-6"><input type="number" step="any" class="form-control" id="expenses" placeholder="Expenses"></div>
+        </div>
 
-    <label>PhonePay:</label>
-    <input type="number" step="any" id="phonePay"><br>
-    <label>PhonePay Status:</label>
-    <input type="text" id="phonePayStatus"><br>
-
-    <label>Credit Card:</label>
-    <input type="number" step="any" id="creditCard"><br>
-    <label>Credit Card Status:</label>
-    <input type="text" id="creditCardStatus"><br>
-
-    <label>Borrowed Amount:</label>
-    <input type="number" step="any" id="borrowedAmount"><br>
-    <label>Debt Recovered:</label>
-    <input type="number" step="any" id="debtRecovered"><br>
-    <label>Borrower:</label>
-    <input type="text" id="borrower"><br>
-
-    <label>Bad Handling:</label>
-    <input type="number" step="any" id="badHandling"><br>
-    <label>Expenses:</label>
-    <input type="number" step="any" id="expenses"><br><br>
-
-    <button type="submit">Submit Collections</button>
-</form>
+        <button type="submit" class="btn btn-success float-end">Submit Collections</button>
+    </form>
+</div>
 
 </body>
 </html>
