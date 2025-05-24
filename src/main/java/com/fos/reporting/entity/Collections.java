@@ -18,7 +18,7 @@ public class Collections {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private LocalDateTime dateTime;
-    private float employeeId;
+    private int employeeId;
     private float cashReceived;
     private float phonePay;
     private float creditCard;

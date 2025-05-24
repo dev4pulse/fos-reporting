@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dashboard Entry</title>
+    <script>
+        function collectProducts() {
+            const productGroups = document.querySelectorAll(".product-group");
+            const products = [];
+
+            productGroups.forEach(group => {
+                const inputs = group.querySelectorAll("input");
+                const product = {
+                    productName: inputs[0].value,
+                    subProduct: inputs[1].value,
+                    opening: parseFloat(inputs[2].value || 0),
+                    closing: parseFloat(inputs[3].value || 0),
+                    price: parseFloat(inputs[4].value),
+                    testing: parseFloat(inputs[5].value || 0)
+                };
+                products.push(product);
+            });
+
+            return products;
+        }
+
+        function submitSalesForm(event) {
+            event.preventDefault();
+
+            const salesData = {
+                date: document.getElementById("salesDate").value,
+                employeeId: parseInt(document.getElementById("salesEmployeeId").value),
+                products: collectProducts()
+            };
+
+            fetch('/sales', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(salesData)
+            })
+            .then(res => res.text())
+            .then(msg => alert("Sales Submitted: " + msg))
+            .catch(err => alert("Sales Error: " + err));
+        }
+
+        function submitCollectionsForm(event) {
+            event.preventDefault();
+
+            const collectionsData = {
+                date: document.getElementById("collectionsDate").value,
+                employeeId: parseInt(document.getElementById("collectionsEmployeeId").value),
+                cashReceived: parseFloat(document.getElementById("cashReceived").value || 0),
+                cashReceivedStatus: document.getElementById("cashReceivedStatus").value,
+                phonePay: parseFloat(document.getElementById("phonePay").value || 0),
+                phonePayStatus: document.getElementById("phonePayStatus").value,
+                creditCard: parseFloat(document.getElementById("creditCard").value || 0),
+                creditCardStatus: document.getElementById("creditCardStatus").value,
+                borrowedAmount: parseFloat(document.getElementById("borrowedAmount").value || 0),
+                debtRecovered: parseFloat(document.getElementById("debtRecovered").value || 0),
+                borrower: document.getElementById("borrower").value,
+                badHandling: parseFloat(document.getElementById("badHandling").value || 0),
+                expenses: parseFloat(document.getElementById("expenses").value || 0)
+            };
+
+            fetch('/collections', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(collectionsData)
+            })
+            .then(res => res.text())
+            .then(msg => alert("Collections Submitted: " + msg))
+            .catch(err => alert("Collections Error: " + err));
+        }
+
+        function addProductRow() {
+            const container = document.getElementById("products");
+
+            const div = document.createElement("div");
+            div.className = "product-group";
+            div.innerHTML = `
+                <hr>
+                <label>Product Name:</label>
+                <input type="text" required><br>
+                <label>Sub Product:</label>
+                <input type="text"><br>
+                <label>Opening:</label>
+                <input type="number" step="any"><br>
+                <label>Closing:</label>
+                <input type="number" step="any"><br>
+                <label>Price:</label>
+                <input type="number" step="any" required><br>
+                <label>Testing:</label>
+                <input type="number" step="any"><br>
+            `;
+            container.appendChild(div);
+        }
+
+        window.onload = () => {
+            addProductRow(); // default one product row
+        };
+    </script>
+</head>
+<body>
+
+<h1>Dashboard Entry</h1>
+
+<!-- Sales Entry Form -->
+<h2>Sales Entry</h2>
+<form id="salesForm" onsubmit="submitSalesForm(event)">
+    <label>Date:</label>
+    <input type="text" id="salesDate" required><br>
+
+    <label>Employee ID:</label>
+    <input type="number" id="salesEmployeeId" required><br>
+
+    <div id="products"></div>
+    <button type="button" onclick="addProductRow()">Add Product</button><br><br>
+
+    <button type="submit">Submit Sales</button>
+</form>
+
+<hr>
+
+<!-- Collections Entry Form -->
+<h2>Collections Entry</h2>
+<form id="collectionsForm" onsubmit="submitCollectionsForm(event)">
+    <label>Date:</label>
+    <input type="text" id="collectionsDate" required><br>
+
+    <label>Employee ID:</label>
+    <input type="number" id="collectionsEmployeeId" required><br>
+
+    <label>Cash Received:</label>
+    <input type="number" step="any" id="cashReceived"><br>
+    <label>Cash Received Status:</label>
+    <input type="text" id="cashReceivedStatus"><br>
+
+    <label>PhonePay:</label>
+    <input type="number" step="any" id="phonePay"><br>
+    <label>PhonePay Status:</label>
+    <input type="text" id="phonePayStatus"><br>
+
+    <label>Credit Card:</label>
+    <input type="number" step="any" id="creditCard"><br>
+    <label>Credit Card Status:</label>
+    <input type="text" id="creditCardStatus"><br>
+
+    <label>Borrowed Amount:</label>
+    <input type="number" step="any" id="borrowedAmount"><br>
+    <label>Debt Recovered:</label>
+    <input type="number" step="any" id="debtRecovered"><br>
+    <label>Borrower:</label>
+    <input type="text" id="borrower"><br>
+
+    <label>Bad Handling:</label>
+    <input type="number" step="any" id="badHandling"><br>
+    <label>Expenses:</label>
+    <input type="number" step="any" id="expenses"><br><br>
+
+    <button type="submit">Submit Collections</button>
+</form>
+
+</body>
+</html>

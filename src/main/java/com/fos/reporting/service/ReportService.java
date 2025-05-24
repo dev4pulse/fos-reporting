@@ -57,6 +57,7 @@ public class ReportService {
         try {
             Collections collections = mapToCollections(collectionsDto);
             LocalDateTime requestedTime = LocalDateTime.parse(collectionsDto.getDate(), formatter);
+            collections.setEmployeeId(collections.getEmployeeId());
             List<Sales> salesByTime = salesRepository.findByDateTime(requestedTime);
             double expectedTotal = salesByTime.stream().map(Sales::getSaleAmount)
                     .mapToDouble(Float::doubleValue).sum();
