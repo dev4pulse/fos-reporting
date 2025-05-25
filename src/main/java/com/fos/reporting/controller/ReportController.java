@@ -2,11 +2,12 @@ package com.fos.reporting.controller;
 
 import com.fos.reporting.domain.CollectionsDto;
 import com.fos.reporting.domain.EntryProduct;
+import com.fos.reporting.domain.GetReportRequest;
+import com.fos.reporting.domain.GetReportResponse;
 import com.fos.reporting.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,7 +56,15 @@ public class ReportController {
             return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
+    @PostMapping("/dashboard-data")
+    public ResponseEntity<GetReportResponse> getDashboardData(@RequestBody @Validated GetReportRequest getReportRequest) {
+        try {
+            return new ResponseEntity<>(reportService.getDashboard(getReportRequest), HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("e" + e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 
 }

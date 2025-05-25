@@ -1,7 +1,6 @@
 package com.fos.reporting.service;
 
-import com.fos.reporting.domain.CollectionsDto;
-import com.fos.reporting.domain.EntryProduct;
+import com.fos.reporting.domain.*;
 import com.fos.reporting.entity.Collections;
 import com.fos.reporting.entity.Sales;
 import com.fos.reporting.repository.CollectionsRepository;
@@ -83,5 +82,32 @@ public class ReportService {
         BeanUtils.copyProperties(collectionsDto,collections);
         collections.setDateTime(LocalDateTime.parse(collectionsDto.getDate(), formatter));
         return collections;
+    }
+
+    public GetReportResponse getDashboard(GetReportRequest req) {
+        GetReportResponse getReportResponse = new GetReportResponse();
+        LocalDateTime fromDate = LocalDateTime.parse(req.getFromDate(), formatter);
+        LocalDateTime toDate = LocalDateTime.parse(req.getToDate(), formatter);
+        List<Collections> collections = collectionsRepository.findByDateTimeBetween(fromDate, toDate);
+        List<Sales> sales = salesRepository.findByDateTimeBetween(fromDate, toDate);
+        float petrol = (float) getSalesByProductName(sales, "petrol");
+        float diesel = (float) getSalesByProductName(sales, "diesel");
+        float petrolCollections = (float) getCollections(sales, "petrol");
+        float dieselCollections = (float) getCollections(sales, "diesel");
+        float actualCollections = (float) collections.stream().map(Collections::getReceivedTotal).mapToDouble(x -> x).sum();
+        getReportResponse.setActualCollection(actualCollections);
+        getReportResponse.setDifference(petrolCollections + dieselCollections - actualCollections);
+        getReportResponse.setPetrol(ReportData.builder().saleInLtr(petrol).expectedCollections(petrolCollections).build());
+        getReportResponse.setDiesel(ReportData.builder().saleInLtr(diesel).expectedCollections(dieselCollections).build());
+        return getReportResponse;
+    }
+
+    private static double getSalesByProductName(List<Sales> sales,String productName) {
+        return sales.stream().filter(x -> productName.equalsIgnoreCase(x.getProductName())).
+                map(Sales::getSale).mapToDouble(x -> x).sum();
+    }
+    private static double getCollections(List<Sales> sales,String productName) {
+        return sales.stream().filter(x -> productName.equalsIgnoreCase(x.getProductName())).
+                map(Sales::getSaleAmount).mapToDouble(x -> x).sum();
     }
 }

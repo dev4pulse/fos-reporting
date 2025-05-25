@@ -11,8 +11,12 @@ public class UIController {
     public String showSalesForm() {
         return "sales-form";  // refers to templates/sales-form.html
     }
+    @GetMapping("/entry")
+    public String addEntry() {
+        return "entry"; // loads entry-form.html
+    }
     @GetMapping("/dashboard")
-    public String showDashboardForm() {
+    public String showDashboard() {
         return "dashboard"; // loads dashboard-form.html
     }
 

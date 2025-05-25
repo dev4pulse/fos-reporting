@@ -12,4 +12,6 @@ public interface SalesRepository extends JpaRepository<Sales, Long> {
     Sales findTopByProductNameAndSubProductOrderByDateTimeDesc(@NotNull String productName, String subProduct);
 
     List<Sales> findByDateTime(@NotNull LocalDateTime datetime);
+
+    List<Sales> findByDateTimeBetween(@NotNull LocalDateTime fromDate, @NotNull LocalDateTime toDate);
 }
