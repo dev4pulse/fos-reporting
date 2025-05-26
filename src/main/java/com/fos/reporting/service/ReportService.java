@@ -15,38 +15,41 @@ import java.util.List;
 
 @Service
 public class ReportService {
-    public static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+    // Updated formatter to match '25/05/2025 11:59:00 PM' pattern
+    public static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm:ss a");
 
     @Autowired
     private SalesRepository salesRepository;
     @Autowired
     private CollectionsRepository collectionsRepository;
+
     public boolean addToSales(EntryProduct entryProduct) {
         try {
-        entryProduct.getProducts().forEach(product -> {
-            Sales sales = new Sales();
-            sales.setDateTime(LocalDateTime.parse(entryProduct.getDate(), formatter));
-            sales.setProductName(product.getProductName());
-            sales.setSubProduct(product.getSubProduct());
-            sales.setEmployeeId(entryProduct.getEmployeeId());
-            float opening = product.getOpening();
-            if (product.getOpening() == 0) {
-                Sales recentSale = salesRepository.findTopByProductNameAndSubProductOrderByDateTimeDesc(sales.getProductName(), sales.getSubProduct());
-                if (recentSale != null) {
-                    opening = recentSale.getClosingStock();
+            entryProduct.getProducts().forEach(product -> {
+                Sales sales = new Sales();
+                // Use the updated formatter here
+                sales.setDateTime(LocalDateTime.parse(entryProduct.getDate(), formatter));
+                sales.setProductName(product.getProductName());
+                sales.setSubProduct(product.getSubProduct());
+                sales.setEmployeeId(entryProduct.getEmployeeId());
+                float opening = product.getOpening();
+                if (product.getOpening() == 0) {
+                    Sales recentSale = salesRepository.findTopByProductNameAndSubProductOrderByDateTimeDesc(sales.getProductName(), sales.getSubProduct());
+                    if (recentSale != null) {
+                        opening = recentSale.getClosingStock();
+                    }
                 }
-            }
-            sales.setClosingStock(product.getClosing());
-            sales.setOpeningStock(opening);
-            sales.setTestingTotal(product.getTesting());
-            float sale = product.getClosing() - opening - product.getTesting();
-            sales.setSale(sale);
-            sales.setPrice(product.getPrice());
-            sales.setSaleAmount(sale * product.getPrice());
-            salesRepository.save(sales);
-        });
+                sales.setClosingStock(product.getClosing());
+                sales.setOpeningStock(opening);
+                sales.setTestingTotal(product.getTesting());
+                float sale = product.getClosing() - opening - product.getTesting();
+                sales.setSale(sale);
+                sales.setPrice(product.getPrice());
+                sales.setSaleAmount(sale * product.getPrice());
+                salesRepository.save(sales);
+            });
             return true;
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -55,6 +58,7 @@ public class ReportService {
     public boolean addToCollections(CollectionsDto collectionsDto) {
         try {
             Collections collections = mapToCollections(collectionsDto);
+            // Use the updated formatter here
             LocalDateTime requestedTime = LocalDateTime.parse(collectionsDto.getDate(), formatter);
             collections.setEmployeeId(collections.getEmployeeId());
             List<Sales> salesByTime = salesRepository.findByDateTime(requestedTime);
@@ -79,13 +83,15 @@ public class ReportService {
 
     private Collections mapToCollections(CollectionsDto collectionsDto) {
         Collections collections = new Collections();
-        BeanUtils.copyProperties(collectionsDto,collections);
+        BeanUtils.copyProperties(collectionsDto, collections);
+        // Use the updated formatter here
         collections.setDateTime(LocalDateTime.parse(collectionsDto.getDate(), formatter));
         return collections;
     }
 
     public GetReportResponse getDashboard(GetReportRequest req) {
         GetReportResponse getReportResponse = new GetReportResponse();
+        // Use the updated formatter here
         LocalDateTime fromDate = LocalDateTime.parse(req.getFromDate(), formatter);
         LocalDateTime toDate = LocalDateTime.parse(req.getToDate(), formatter);
         List<Collections> collections = collectionsRepository.findByDateTimeBetween(fromDate, toDate);
@@ -98,16 +104,5 @@ public class ReportService {
         getReportResponse.setActualCollection(actualCollections);
         getReportResponse.setDifference(petrolCollections + dieselCollections - actualCollections);
         getReportResponse.setPetrol(ReportData.builder().saleInLtr(petrol).expectedCollections(petrolCollections).build());
-        getReportResponse.setDiesel(ReportData.builder().saleInLtr(diesel).expectedCollections(dieselCollections).build());
-        return getReportResponse;
-    }
-
-    private static double getSalesByProductName(List<Sales> sales,String productName) {
-        return sales.stream().filter(x -> productName.equalsIgnoreCase(x.getProductName())).
-                map(Sales::getSale).mapToDouble(x -> x).sum();
-    }
-    private static double getCollections(List<Sales> sales,String productName) {
-        return sales.stream().filter(x -> productName.equalsIgnoreCase(x.getProductName())).
-                map(Sales::getSaleAmount).mapToDouble(x -> x).sum();
-    }
-}
+        getReportResponse.setDiesel(ReportData.builder*
+
