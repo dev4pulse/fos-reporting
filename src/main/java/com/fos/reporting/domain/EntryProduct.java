@@ -1,20 +1,30 @@
 package com.fos.reporting.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
-@Setter
-@Getter
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class EntryProduct {
 
+    /** Binds "YYYY-MM-DD" JSON strings into a LocalDate */
     @NotNull
-    private String date;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate date;
+
+    /** Employee ID from the form */
+    @NotNull
+    private Integer employeeId;
+
+    /** List of products (petrol/diesel/etc.) */
+    @NotNull
     private List<Product> products;
-    @NotNull
-    private int employeeId;
 }
+
