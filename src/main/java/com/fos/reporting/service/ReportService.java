@@ -20,7 +20,6 @@ import java.util.List;
 
 @Service
 public class ReportService {
-    // Used for parsing your CollectionsDto and GetReportRequest dates
     private static final DateTimeFormatter DATE_TIME_FMT =
         DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
@@ -32,42 +31,31 @@ public class ReportService {
 
     public boolean addToSales(EntryProduct entryProduct) {
         try {
-            // entryProduct.getDate() is a LocalDate; convert to DateTime at start of day
             LocalDateTime saleDateTime = entryProduct.getDate().atStartOfDay();
 
             for (Product product : entryProduct.getProducts()) {
                 Sales sales = new Sales();
-
-                // 1) Set timestamp
                 sales.setDateTime(saleDateTime);
-
-                // 2) Employee & product info
                 sales.setEmployeeId(entryProduct.getEmployeeId());
                 sales.setProductName(product.getProductName());
                 sales.setSubProduct(product.getSubProduct());
 
-                // 3) Determine openingStock fallback if zero
                 float opening = product.getOpening();
                 if (opening == 0f) {
                     Sales recent = salesRepository
                       .findTopByProductNameAndSubProductOrderByDateTimeDesc(
-                          sales.getProductName(),
-                          sales.getSubProduct());
+                        sales.getProductName(), sales.getSubProduct());
                     if (recent != null) {
                         opening = recent.getClosingStock();
                     }
                 }
                 sales.setOpeningStock(opening);
-
-                // 4) The rest of the fields
                 sales.setClosingStock(product.getClosing());
                 sales.setTestingTotal(product.getTesting());
                 float sale = product.getClosing() - opening - product.getTesting();
                 sales.setSale(sale);
                 sales.setPrice(product.getPrice());
                 sales.setSaleAmount(sale * product.getPrice());
-
-                // 5) Persist
                 salesRepository.save(sales);
             }
             return true;
@@ -80,27 +68,24 @@ public class ReportService {
     public boolean addToCollections(CollectionsDto dto) {
         try {
             Collections coll = mapToCollections(dto);
+            LocalDateTime ts = LocalDateTime.parse(dto.getDate(), DATE_TIME_FMT);
+            coll.setDateTime(ts);
 
-            LocalDateTime timestamp = LocalDateTime.parse(dto.getDate(), DATE_TIME_FMT);
-            coll.setDateTime(timestamp);
-
-            List<Sales> salesList = salesRepository.findByDateTime(timestamp);
-            double expectedTotal = salesList.stream()
-                .map(Sales::getSaleAmount)
-                .mapToDouble(Float::doubleValue)
+            List<Sales> salesList = salesRepository.findByDateTime(ts);
+            double expected = salesList.stream()
+                .mapToDouble(Sales::getSaleAmount)
                 .sum();
 
-            double receivedTotal = dto.getCashReceived()
-                + dto.getPhonePay()
-                + dto.getCreditCard()
-                + dto.getBorrowedAmount()
-                + dto.getDebtRecovered()
-                + dto.getExpenses();
+            double received = dto.getCashReceived()
+                            + dto.getPhonePay()
+                            + dto.getCreditCard()
+                            + dto.getBorrowedAmount()
+                            + dto.getDebtRecovered()
+                            + dto.getExpenses();
 
-            coll.setExpectedTotal(expectedTotal);
-            coll.setReceivedTotal(receivedTotal);
-            coll.setDifference(expectedTotal - receivedTotal);
-
+            coll.setExpectedTotal(expected);
+            coll.setReceivedTotal(received);
+            coll.setDifference(expected - received);
             return collectionsRepository.save(coll).getId() > 0;
         } catch (Exception e) {
             e.printStackTrace();
@@ -123,17 +108,15 @@ public class ReportService {
         List<Collections> collList = collectionsRepository.findByDateTimeBetween(from, to);
         List<Sales>       salesList = salesRepository.findByDateTimeBetween(from, to);
 
-        // Total liters sold
         double petrolLiters = salesList.stream()
             .filter(s -> "petrol".equalsIgnoreCase(s.getProductName()))
-            .mapToDouble(s -> s.getSale())  // sale = closingStock - openingStock - testingTotal
+            .mapToDouble(Sales::getSale)
             .sum();
         double dieselLiters = salesList.stream()
             .filter(s -> "diesel".equalsIgnoreCase(s.getProductName()))
             .mapToDouble(Sales::getSale)
             .sum();
 
-        // Expected collections (saleAmount)
         double petrolColl = salesList.stream()
             .filter(s -> "petrol".equalsIgnoreCase(s.getProductName()))
             .mapToDouble(Sales::getSaleAmount)
@@ -143,7 +126,6 @@ public class ReportService {
             .mapToDouble(Sales::getSaleAmount)
             .sum();
 
-        // Actual collected
         double actual = collList.stream()
             .mapToDouble(Collections::getReceivedTotal)
             .sum();
@@ -162,4 +144,11 @@ public class ReportService {
 
         return resp;
     }
+
+    /** Exposed for the new `/sales/last` endpoint */
+    public Sales findLastSale(String productName, String subProduct) {
+        return salesRepository
+            .findTopByProductNameAndSubProductOrderByDateTimeDesc(productName, subProduct);
+    }
 }
+
