@@ -4,15 +4,15 @@ import com.fos.reporting.domain.CollectionsDto;
 import com.fos.reporting.domain.EntryProduct;
 import com.fos.reporting.domain.GetReportRequest;
 import com.fos.reporting.domain.GetReportResponse;
+import com.fos.reporting.entity.Sales;
 import com.fos.reporting.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 public class ReportController {
@@ -22,49 +22,41 @@ public class ReportController {
 
     @GetMapping("/test")
     public ResponseEntity<String> ping() {
-        try {
-            System.out.println("report service call");
-            return new ResponseEntity<>("test from report service", HttpStatus.OK);
-        } catch (Exception e) {
-            System.out.println("e" + e);
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return ResponseEntity.ok("test from report service");
     }
 
     @PostMapping("/sales")
     public ResponseEntity<String> addEntry(@RequestBody @Validated EntryProduct entryProduct) {
-        try {
-            if (reportService.addToSales(entryProduct)) {
-                return new ResponseEntity<>("added to sales", HttpStatus.OK);
-            }
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (Exception e) {
-            System.out.println("e" + e);
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
+        if (reportService.addToSales(entryProduct)) {
+            return ResponseEntity.ok("added to sales");
         }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
     }
 
     @PostMapping("/collections")
     public ResponseEntity<String> addCollections(@RequestBody @Validated CollectionsDto collectionsDto) {
-        try {
-            if (reportService.addToCollections(collectionsDto)) {
-                return new ResponseEntity<>("added to collections", HttpStatus.OK);
-            }
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (Exception e) {
-            System.out.println("e" + e);
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
+        if (reportService.addToCollections(collectionsDto)) {
+            return ResponseEntity.ok("added to collections");
         }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
     }
+
     @PostMapping("/dashboard-data")
-    public ResponseEntity<GetReportResponse> getDashboardData(@RequestBody @Validated GetReportRequest getReportRequest) {
-        try {
-            return new ResponseEntity<>(reportService.getDashboard(getReportRequest), HttpStatus.OK);
-        } catch (Exception e) {
-            System.out.println("e" + e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<GetReportResponse> getDashboardData(@RequestBody @Validated GetReportRequest req) {
+        return ResponseEntity.ok(reportService.getDashboard(req));
     }
 
-
+    /**
+     * GET /sales/last?productName=...&subProduct=...
+     * Returns the most recent closingStock for that product+sub-product.
+     */
+    @GetMapping("/sales/last")
+    public ResponseEntity<Map<String, Float>> getLastClosing(
+            @RequestParam String productName,
+            @RequestParam String subProduct
+    ) {
+        Sales last = reportService.findLastSale(productName, subProduct);
+        float closing = (last != null) ? last.getClosingStock() : 0f;
+        return ResponseEntity.ok(Map.of("lastClosing", closing));
+    }
 }
