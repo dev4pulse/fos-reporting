@@ -24,4 +24,5 @@ public class Sales {
     private int employeeId;
 
     private List<Product> products;
+    
 }
