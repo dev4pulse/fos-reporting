@@ -4,30 +4,24 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "sales")
 @Data
-@Setter
-@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 public class Sales {
+
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
+
     @NotNull
-    private LocalDateTime dateTime;
-    @NotNull
-    private String productName;
-    private String subProduct;
+    private String date;
+
     @NotNull
     private int employeeId;
-    private float openingStock;
-    private float closingStock;
-    private float testingTotal;
-    private float sale;
-    private float price;
-    private float saleAmount;
+
+    private List<Product> products;
 }
