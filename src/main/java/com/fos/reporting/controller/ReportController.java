@@ -9,10 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 public class ReportController {
@@ -56,8 +55,10 @@ public class ReportController {
             return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     @PostMapping("/dashboard-data")
-    public ResponseEntity<GetReportResponse> getDashboardData(@RequestBody @Validated GetReportRequest getReportRequest) {
+    public ResponseEntity<GetReportResponse> getDashboardData(
+            @RequestBody @Validated GetReportRequest getReportRequest) {
         try {
             return new ResponseEntity<>(reportService.getDashboard(getReportRequest), HttpStatus.OK);
         } catch (Exception e) {
@@ -66,5 +67,18 @@ public class ReportController {
         }
     }
 
-
+    /**
+     * Auto‐fill helper: fetch the most recent closingStock for a product/subProduct.
+     *
+     * Example: GET /sales/last?productName=Petrol&subProduct=Premium
+     * Returns: { "lastClosing": 123.45 }
+     */
+    @GetMapping("/sales/last")
+    public ResponseEntity<Map<String, Float>> getLastClosing(
+            @RequestParam String productName,
+            @RequestParam String subProduct
+    ) {
+        float last = reportService.getLastClosing(productName, subProduct);
+        return ResponseEntity.ok(Map.of("lastClosing", last));
+    }
 }
