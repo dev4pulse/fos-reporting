@@ -38,9 +38,9 @@ public class ReportService {
             }
             sales.setClosingStock(product.getClosing());
             sales.setOpeningStock(opening);
-            sales.setTestingTotal(product.getTesting());
+            sales.setTesting(product.getTesting());
             float sale = product.getClosing() - opening - product.getTesting();
-            sales.setSale(sale);
+            sales.setLiterssold(sale);
             sales.setPrice(product.getPrice());
             sales.setSaleAmount(sale * product.getPrice());
             salesRepository.save(sales);
@@ -104,7 +104,7 @@ public class ReportService {
 
     private static double getSalesByProductName(List<Sales> sales,String productName) {
         return sales.stream().filter(x -> productName.equalsIgnoreCase(x.getProductName())).
-                map(Sales::getSale).mapToDouble(x -> x).sum();
+                map(Sales::getLiterssold).mapToDouble(x -> x).sum();
     }
     private static double getCollections(List<Sales> sales,String productName) {
         return sales.stream().filter(x -> productName.equalsIgnoreCase(x.getProductName())).

@@ -1,10 +1,12 @@
+
+
 package com.fos.reporting.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "sales")
@@ -12,17 +14,24 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Sales {
-
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy= GenerationType.AUTO)
     private Long id;
-
     @NotNull
-    private String date;
-
+    private LocalDateTime dateTime;
+    @NotNull
+    private String productName;
+    private String subProduct;
     @NotNull
     private int employeeId;
-
-    private List<Product> products;
-    
+    private float openingStock;
+    private float closingStock;
+    private float price;
+    @Column(nullable = true)
+    private float testing;
+    @Column(nullable = true)
+    private float literssold;
+    @Column(nullable = true)
+    private float revenue;
+    private float saleAmount;
 }
