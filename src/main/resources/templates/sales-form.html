@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Sales Entry Form</title>
+    <script>
+        let productIndex = 0;
+
+        function addProductRow() {
+            const container = document.getElementById("products");
+
+            const div = document.createElement("div");
+            div.className = "product-group";
+            div.innerHTML = `
+                <hr>
+                <label>Product Name:</label>
+                <input type="text" name="productName" required><br>
+
+                <label>Sub Product:</label>
+                <input type="text" name="subProduct"><br>
+
+                <label>Opening:</label>
+                <input type="number" step="any" name="opening"><br>
+
+                <label>Closing:</label>
+                <input type="number" step="any" name="closing"><br>
+
+                <label>Price:</label>
+                <input type="number" step="any" name="price" required><br>
+
+                <label>Testing:</label>
+                <input type="number" step="any" name="testing"><br>
+            `;
+            container.appendChild(div);
+        }
+
+        function collectProducts() {
+            const productGroups = document.querySelectorAll(".product-group");
+            const products = [];
+
+            productGroups.forEach(group => {
+                const inputs = group.querySelectorAll("input");
+                const product = {
+                    productName: inputs[0].value,
+                    subProduct: inputs[1].value,
+                    opening: parseFloat(inputs[2].value || 0),
+                    closing: parseFloat(inputs[3].value || 0),
+                    price: parseFloat(inputs[4].value),
+                    testing: parseFloat(inputs[5].value || 0)
+                };
+                products.push(product);
+            });
+
+            return products;
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+
+            const entry = {
+                date: document.getElementById("date").value,
+                employeeId: parseInt(document.getElementById("employeeId").value),
+                products: collectProducts()
+            };
+
+            fetch('/sales', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(entry)
+            })
+            .then(response => response.text())
+            .then(msg => alert("Submitted: " + msg))
+            .catch(err => alert("Error: " + err));
+        }
+
+        window.onload = () => {
+            addProductRow(); // Add at least one row on page load
+        };
+    </script>
+</head>
+<body>
+<h1>Sales Entry</h1>
+
+<form id="salesForm" onsubmit="submitForm(event)">
+    <label>Date:</label>
+    <input type="text" id="date" name="date" required><br>
+
+    <label>Employee ID:</label>
+    <input type="number" id="employeeId" name="employeeId" required><br>
+
+    <h3>Products</h3>
+    <div id="products"></div>
+
+    <button type="button" onclick="addProductRow()">Add Another Product</button><br><br>
+    <button type="submit">Submit</button>
+</form>
+
+</body>
+</html>
