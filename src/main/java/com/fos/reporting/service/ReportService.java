@@ -1,3 +1,4 @@
+// ReportService.java
 package com.fos.reporting.service;
 
 import com.fos.reporting.domain.*;
@@ -21,36 +22,48 @@ public class ReportService {
     private SalesRepository salesRepository;
     @Autowired
     private CollectionsRepository collectionsRepository;
+    /** 
+     * Helper for UI: fetches last closing stock for a product/sub-product 
+     */
+    public Float getLastClosing(String productName, String subProduct) {
+        Sales last = salesRepository
+            .findTopByProductNameAndSubProductOrderByDateTimeDesc(productName, subProduct);
+        return (last != null) ? last.getClosingStock() : 0f;
+    }
+
     public boolean addToSales(EntryProduct entryProduct) {
-        try {
+    try {
         entryProduct.getProducts().forEach(product -> {
             Sales sales = new Sales();
             sales.setDateTime(LocalDateTime.parse(entryProduct.getDate(), formatter));
             sales.setProductName(product.getProductName());
             sales.setSubProduct(product.getSubProduct());
             sales.setEmployeeId(entryProduct.getEmployeeId());
+
             float opening = product.getOpening();
-            if (product.getOpening() == 0) {
-                Sales recentSale = salesRepository.findTopByProductNameAndSubProductOrderByDateTimeDesc(sales.getProductName(), sales.getSubProduct());
-                if (recentSale != null) {
-                    opening = recentSale.getClosingStock();
-                }
+            if (opening == 0f) {
+                // Use reusable method
+                opening = getLastClosing(product.getProductName(), product.getSubProduct());
             }
-            sales.setClosingStock(product.getClosing());
+
             sales.setOpeningStock(opening);
+            sales.setClosingStock(product.getClosing());
             sales.setTestingTotal(product.getTesting());
+
             float sale = product.getClosing() - opening - product.getTesting();
             sales.setSale(sale);
             sales.setPrice(product.getPrice());
             sales.setSaleAmount(sale * product.getPrice());
+
             salesRepository.save(sales);
         });
-            return true;
-        }catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+        return true;
+    } catch (Exception e) {
+        e.printStackTrace();
+        return false;
     }
+}
+
 
     public boolean addToCollections(CollectionsDto collectionsDto) {
         try {
@@ -84,6 +97,9 @@ public class ReportService {
         return collections;
     }
 
+    /**
+     * Dashboard logic unchanged.
+     */
     public GetReportResponse getDashboard(GetReportRequest req) {
         GetReportResponse getReportResponse = new GetReportResponse();
         LocalDateTime fromDate = LocalDateTime.parse(req.getFromDate(), formatter);
@@ -111,3 +127,4 @@ public class ReportService {
                 map(Sales::getSaleAmount).mapToDouble(x -> x).sum();
     }
 }
+
