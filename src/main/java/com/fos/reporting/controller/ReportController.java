@@ -1,13 +1,9 @@
 package com.fos.reporting.controller;
 
-import com.fos.reporting.domain.CollectionsDto;
-import com.fos.reporting.domain.EntryProduct;
-import com.fos.reporting.domain.GetReportRequest;
-import com.fos.reporting.domain.GetReportResponse;
+import com.fos.reporting.domain.*;           // wildcard import for CollectionsDto, EntryProduct, etc.
 import com.fos.reporting.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +15,8 @@ public class ReportController {
     @Autowired
     private ReportService reportService;
 
-    @GetMapping("/test")
+    // === Unchanged: simple health-check endpoint ===
+     @GetMapping("/test")
     public ResponseEntity<String> ping() {
         try {
             System.out.println("report service call");
@@ -43,6 +40,16 @@ public class ReportController {
         }
     }
 
+    // === New: fetch prior closing-stock for a given product & subProduct ===
+    @GetMapping("/sales/last")
+    public ResponseEntity<Map<String, Float>> getLastClosing(
+            @RequestParam String productName,
+            @RequestParam String subProduct
+    ) {
+        float last = reportService.getLastClosing(productName, subProduct);
+        return ResponseEntity.ok(Map.of("lastClosing", last));
+    }
+
     @PostMapping("/collections")
     public ResponseEntity<String> addCollections(@RequestBody @Validated CollectionsDto collectionsDto) {
         try {
@@ -57,8 +64,7 @@ public class ReportController {
     }
 
     @PostMapping("/dashboard-data")
-    public ResponseEntity<GetReportResponse> getDashboardData(
-            @RequestBody @Validated GetReportRequest getReportRequest) {
+    public ResponseEntity<GetReportResponse> getDashboardData(@RequestBody @Validated GetReportRequest getReportRequest) {
         try {
             return new ResponseEntity<>(reportService.getDashboard(getReportRequest), HttpStatus.OK);
         } catch (Exception e) {
@@ -66,19 +72,5 @@ public class ReportController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    /**
-     * Auto‐fill helper: fetch the most recent closingStock for a product/subProduct.
-     *
-     * Example: GET /sales/last?productName=Petrol&subProduct=Premium
-     * Returns: { "lastClosing": 123.45 }
-     */
-    @GetMapping("/sales/last")
-    public ResponseEntity<Map<String, Float>> getLastClosing(
-            @RequestParam String productName,
-            @RequestParam String subProduct
-    ) {
-        float last = reportService.getLastClosing(productName, subProduct);
-        return ResponseEntity.ok(Map.of("lastClosing", last));
-    }
 }
+
