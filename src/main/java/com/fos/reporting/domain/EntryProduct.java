@@ -1,5 +1,6 @@
 package com.fos.reporting.domain;
 
+import com.fos.reporting.entity.Product;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
