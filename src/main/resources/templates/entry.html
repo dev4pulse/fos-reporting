@@ -15,29 +15,39 @@
         div.className = "row g-2 mb-3 product-group border rounded p-3 bg-light position-relative";
 
         div.innerHTML = `
-          <div class="col-md-4">
-            <input type="text" class="form-control product-name" placeholder="Product Name" required>
-          </div>
-          <div class="col-md-4">
-            <input type="text" class="form-control sub-product" placeholder="Sub Product" required>
-          </div>
-          <div class="col-md-2">
-            <input type="number" step="any" class="form-control opening" placeholder="Opening">
-          </div>
-          <div class="col-md-2">
-            <input type="number" step="any" class="form-control closing" placeholder="Closing">
-          </div>
-          <div class="col-md-4">
-            <input type="number" step="any" class="form-control price" placeholder="Price" required>
-          </div>
-          <div class="col-md-4">
-            <input type="number" step="any" class="form-control testing" placeholder="Testing">
-          </div>
-          <div class="col-md-4 text-end">
-            <button type="button" class="btn btn-outline-danger btn-sm mt-2"
-                    onclick="removeProductRow(this)">Remove</button>
-          </div>
-        `;
+        <div class="col-md-4">
+          <select class="form-control product-name" required>
+            <option value="" disabled selected>Select Product</option>
+            <option value="Petrol">Petrol</option>
+            <option value="Diesel">Diesel</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <select class="form-control sub-product" required>
+            <option value="" disabled selected>Select Sub Product</option>
+            <option value="G1">G1</option>
+            <option value="G2">G2</option>
+            <option value="G3">G3</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <input type="number" step="any" class="form-control opening" placeholder="Opening" readonly>
+        </div>
+        <div class="col-md-2">
+          <input type="number" step="any" class="form-control closing" placeholder="Closing">
+        </div>
+        <div class="col-md-4">
+          <input type="number" step="any" class="form-control price" placeholder="Price" required>
+        </div>
+        <div class="col-md-4">
+          <input type="number" step="any" class="form-control testing" placeholder="Testing">
+        </div>
+        <div class="col-md-4 text-end">
+          <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="removeProductRow(this)">Remove</button>
+        </div>
+      `;
+
         container.appendChild(div);
 
         // —— Auto‐fill Opening from last Closing ——
