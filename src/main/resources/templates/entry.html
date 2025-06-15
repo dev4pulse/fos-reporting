@@ -16,7 +16,7 @@ function attachLiterssoldCalculation(group) {
         const closing = parseFloat(closingInput.value) || 0;
         const price = parseFloat(priceInput.value) || 0;
 
-        const litersSold = opening - closing - testing;
+        const litersSold =  closing -opening - testing;
         LiterssoldInput.value = litersSold >= 0 ? litersSold.toFixed(2) : "";
 
         const revenue = litersSold * price;
