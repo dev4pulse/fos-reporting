@@ -16,10 +16,20 @@
 
         div.innerHTML = `
           <div class="col-md-4">
-            <input type="text" class="form-control product-name" placeholder="Product Name" required>
+            <select class="form-control product-name" required>
+              <option value="" disabled selected>Select Product</option>
+              <option value="Petrol">Petrol</option>
+              <option value="Diesel">Diesel</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
           <div class="col-md-4">
-            <input type="text" class="form-control sub-product" placeholder="Sub Product" required>
+            <select class="form-control sub-product" required>
+              <option value="" disabled selected>Select Sub Product</option>
+              <option value="G1">G1</option>
+              <option value="G2">G2</option>
+              <option value="G3">G3</option>
+            </select>
           </div>
           <div class="col-md-2">
             <input type="number" step="any" class="form-control opening" placeholder="Opening">
@@ -73,14 +83,15 @@
         const products = [];
 
         groups.forEach(group => {
-          const inputs = group.querySelectorAll("input");
+          const fields = group.querySelectorAll("select, input");
+
           products.push({
-            productName: inputs[0].value,
-            subProduct:  inputs[1].value,
-            opening:     parseFloat(inputs[2].value || 0),
-            closing:     parseFloat(inputs[3].value || 0),
-            price:       parseFloat(inputs[4].value),
-            testing:     parseFloat(inputs[5].value || 0)
+            productName: fields[0].value,
+            subProduct:  fields[1].value,
+            opening:     parseFloat(fields[2].value || 0),
+            closing:     parseFloat(fields[3].value || 0),
+            price:       parseFloat(fields[4].value || 0),
+            testing:     parseFloat(fields[5].value || 0)
           });
         });
 
@@ -194,3 +205,4 @@
 
 </body>
 </html>
+
