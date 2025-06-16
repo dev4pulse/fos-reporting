@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Collections Entry</title>
+    <script>
+        function submitCollectionsForm(event) {
+            event.preventDefault();
+
+            const data = {
+                date: document.getElementById("date").value,
+                employeeId: parseInt(document.getElementById("employeeId").value),
+                cashReceived: parseFloat(document.getElementById("cashReceived").value || 0),
+                cashReceivedStatus: document.getElementById("cashReceivedStatus").value,
+                phonePay: parseFloat(document.getElementById("phonePay").value || 0),
+                phonePayStatus: document.getElementById("phonePayStatus").value,
+                creditCard: parseFloat(document.getElementById("creditCard").value || 0),
+                creditCardStatus: document.getElementById("creditCardStatus").value,
+                borrowedAmount: parseFloat(document.getElementById("borrowedAmount").value || 0),
+                debtRecovered: parseFloat(document.getElementById("debtRecovered").value || 0),
+                borrower: document.getElementById("borrower").value,
+                badHandling: parseFloat(document.getElementById("badHandling").value || 0),
+                expenses: parseFloat(document.getElementById("expenses").value || 0)
+            };
+
+            fetch('/collections', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.text())
+            .then(msg => alert("Submitted: " + msg))
+            .catch(err => alert("Error: " + err));
+        }
+    </script>
+</head>
+<body>
+<h1>Collections Entry</h1>
+
+<form id="collectionsForm" onsubmit="submitCollectionsForm(event)">
+    <label>Date:</label>
+    <input type="text" id="date" required><br>
+
+    <label>Employee ID:</label>
+    <input type="number" id="employeeId" required><br>
+
+    <label>Cash Received:</label>
+    <input type="number" step="any" id="cashReceived"><br>
+
+    <label>Cash Received Status:</label>
+    <input type="text" id="cashReceivedStatus"><br>
+
+    <label>PhonePay:</label>
+    <input type="number" step="any" id="phonePay"><br>
+
+    <label>PhonePay Status:</label>
+    <input type="text" id="phonePayStatus"><br>
+
+    <label>Credit Card:</label>
+    <input type="number" step="any" id="creditCard"><br>
+
+    <label>Credit Card Status:</label>
+    <input type="text" id="creditCardStatus"><br>
+
+    <label>Borrowed Amount:</label>
+    <input type="number" step="any" id="borrowedAmount"><br>
+
+    <label>Debt Recovered:</label>
+    <input type="number" step="any" id="debtRecovered"><br>
+
+    <label>Borrower:</label>
+    <input type="text" id="borrower"><br>
+
+    <label>Bad Handling:</label>
+    <input type="number" step="any" id="badHandling"><br>
+
+    <label>Expenses:</label>
+    <input type="number" step="any" id="expenses"><br><br>
+
+    <button type="submit">Submit</button>
+</form>
+
+</body>
+</html>
