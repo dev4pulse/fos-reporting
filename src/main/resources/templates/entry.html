@@ -120,7 +120,7 @@
         event.preventDefault();
         const data = {
           date: document.getElementById("collectionsDate").value,
-          employeeId: parseInt(document.getElementById("collectionsEmployeeId").value),
+          employeeId: parseInt(document.getElementById("collectionsEmployeeDropdown").value),
           cashReceived: parseFloat(document.getElementById("cashReceived").value || 0),
           cashReceivedStatus: document.getElementById("cashReceivedStatus").value,
           phonePay: parseFloat(document.getElementById("phonePay").value || 0),
@@ -146,6 +146,53 @@
 
       window.onload = () => addProductRow();
     </script>
+    <script>
+document.addEventListener("DOMContentLoaded", function () {
+    flatpickr("#salesDate", {
+        enableTime: true,
+        dateFormat: "dd-MM-yyyy HH:mm:ss",
+        altInput: true,
+        altFormat: "F j, Y h:i K",
+        defaultDate: new Date()
+    });
+
+    flatpickr("#collectionsDate", {
+        enableTime: true,
+        dateFormat: "dd-MM-yyyy HH:mm:ss",
+        altInput: true,
+        altFormat: "F j, Y h:i K",
+        defaultDate: new Date()
+    });
+
+    fetch("/employees/active")
+        .then(response => response.json())
+        .then(data => {
+            // For Sales Employee Dropdown
+            const salesDropdown = document.getElementById("salesEmployeeDropdown");
+            salesDropdown.innerHTML = '<option value="">Select Employee ID and Name</option>';
+            data.forEach(emp => {
+                const option = document.createElement("option");
+                option.value = emp.employeeId;
+                option.text = emp.employeeId + ' - ' + emp.employeeName;
+                salesDropdown.appendChild(option);
+            });
+
+            // For Collections Employee Dropdown
+            const collectionsDropdown = document.getElementById("collectionsEmployeeDropdown");
+            collectionsDropdown.innerHTML = '<option value="">Select Employee ID and Name</option>';
+            data.forEach(emp => {
+                const option = document.createElement("option");
+                option.value = emp.employeeId;
+                option.text = emp.employeeId + ' - ' + emp.employeeName;
+                collectionsDropdown.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching employees:', error);
+            alert('Failed to load employee data for entry form.');
+        });
+});
+</script>
 </head>
 <body class="bg-body-tertiary">
 
@@ -160,7 +207,9 @@
                 <input type="text" class="form-control" id="salesDate" placeholder="Date" required>
             </div>
             <div class="col-md-6">
-                <input type="number" class="form-control" id="salesEmployeeId" placeholder="Employee ID" required>
+               <select name="employeeId" class="form-control" id="salesEmployeeDropdown" required>
+                    <option value="">Select Employee ID and Name</option>
+                </select>
             </div>
         </div>
 
@@ -177,7 +226,8 @@
                 <input type="text" class="form-control" id="collectionsDate" placeholder="Date" required>
             </div>
             <div class="col-md-6">
-                <input type="number" class="form-control" id="collectionsEmployeeId" placeholder="Employee ID" required>
+                 <select name="employeeIdc" class="form-control" id="collectionsEmployeeDropdown" required> <option value="">Select Employee ID and Name</option>
+                </select>
             </div>
         </div>
 
