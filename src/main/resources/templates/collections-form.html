@@ -2,13 +2,15 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Collections Entry</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         function submitCollectionsForm(event) {
             event.preventDefault();
 
             const data = {
-                date: document.getElementById("date").value,
-                employeeId: parseInt(document.getElementById("employeeId").value),
+                date: document.getElementById("collectionsDate").value,
+                employeeId: parseInt(document.getElementById("collectionsEmployeeDropdown").value),
                 cashReceived: parseFloat(document.getElementById("cashReceived").value || 0),
                 cashReceivedStatus: document.getElementById("cashReceivedStatus").value,
                 phonePay: parseFloat(document.getElementById("phonePay").value || 0),
@@ -34,16 +36,47 @@
             .catch(err => alert("Error: " + err));
         }
     </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            flatpickr("#collectionsDate", {
+                enableTime: true,
+                dateFormat: "dd-MM-yyyy HH:mm:ss", // Format for backend
+                altInput: true, // Display a human-friendly date
+                altFormat: "F j, Y h:i K", // Human-friendly display format
+                defaultDate: new Date()
+            });
+
+            fetch("/employees/active")
+                .then(response => response.json())
+                .then(data => {
+                    const collectionsDropdown = document.getElementById("collectionsEmployeeDropdown");
+                    collectionsDropdown.innerHTML = '<option value="">Select Employee ID and Name</option>';
+                    data.forEach(emp => {
+                        const option = document.createElement("option");
+                        option.value = emp.employeeId;
+                        option.text = emp.employeeId + ' - ' + emp.employeeName;
+                        collectionsDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching employees:', error);
+                    alert('Failed to load employee data for collections form.');
+                });
+        });
+    </script>
+
 </head>
 <body>
 <h1>Collections Entry</h1>
 
 <form id="collectionsForm" onsubmit="submitCollectionsForm(event)">
     <label>Date:</label>
-    <input type="text" id="date" required><br>
+    <input type="text" class="form-control" id="collectionsDate" name="collectionsDate" placeholder="Select Collections Date" required>
 
     <label>Employee ID:</label>
-    <input type="number" id="employeeId" required><br>
+    <select class="form-control" id="collectionsEmployeeDropdown" name="collectionsEmployeeDropdown" required>
+        <option value="">Select Employee ID and Name</option>
+    </select>
 
     <label>Cash Received:</label>
     <input type="number" step="any" id="cashReceived"><br>
