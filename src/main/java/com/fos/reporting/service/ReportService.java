@@ -16,7 +16,7 @@ import java.util.List;
 
 @Service
 public class ReportService {
-    public static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+    public static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Autowired
     private SalesRepository salesRepository;
