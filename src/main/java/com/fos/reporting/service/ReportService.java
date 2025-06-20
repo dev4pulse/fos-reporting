@@ -88,11 +88,12 @@ public class ReportService {
             double expectedTotal = salesByTime.stream().map(Sales::getSaleAmount)
                     .mapToDouble(Float::doubleValue).sum();
 
-            double receivedTotal = collectionsDto.getCashReceived()
-                    + collectionsDto.getPhonePay()
-                    + collectionsDto.getCreditCard()
-                    + collectionsDto.getBorrowedAmount()
-                    + collectionsDto.getDebtRecovered();
+            double receivedTotal = collectionsDto.getCashReceived() +
+                    collectionsDto.getPhonePay() +
+                    collectionsDto.getCreditCard() +
+                    collectionsDto.getBorrowedAmount() +
+                    collectionsDto.getDebtRecovered();
+
 
             collections.setExpectedTotal(expectedTotal);
             collections.setReceivedTotal(receivedTotal);
@@ -156,18 +157,14 @@ public class ReportService {
 
     private static double getSalesByProductName(List<Sales> sales, String productName) {
         return sales.stream()
-                .filter(x -> productName.equalsIgnoreCase(x.getProductName()))
-                .map(Sales::getSale)
-                .mapToDouble(x -> x)
-                .sum();
+                .filter(x -> productName.equalsIgnoreCase(x.getProductName())).map(Sales::getSale)
+                .mapToDouble(x -> x).sum();
     }
 
     private static double getCollections(List<Sales> sales, String productName) {
         return sales.stream()
-                .filter(x -> productName.equalsIgnoreCase(x.getProductName()))
-                .map(Sales::getSaleAmount)
-                .mapToDouble(x -> x)
-                .sum();
+                .filter(x -> productName.equalsIgnoreCase(x.getProductName())).map(Sales::getSaleAmount)
+                .mapToDouble(x -> x).sum();
     }
 }
 
