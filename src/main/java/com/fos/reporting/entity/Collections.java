@@ -17,7 +17,9 @@ public class Collections {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
     private LocalDateTime dateTime;
+
     private int employeeId;
     private float cashReceived;
     private float phonePay;
@@ -25,9 +27,13 @@ public class Collections {
     private float borrowedAmount;
     private float debtRecovered;
     private String borrower;
-    private float badHandling;
-    private float expenses;
+
+    // ✅ Updated field mapping for renamed DB column
+    @Column(name = "short_collections")
+    private float shortCollections;
+
     private double expectedTotal;
     private double receivedTotal;
     private double difference;
 }
+

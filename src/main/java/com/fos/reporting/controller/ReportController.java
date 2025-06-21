@@ -51,17 +51,21 @@ public class ReportController {
     }
 
     @PostMapping("/collections")
-    public ResponseEntity<String> addCollections(@RequestBody @Validated CollectionsDto collectionsDto) {
-        try {
-            if (reportService.addToCollections(collectionsDto)) {
-                return new ResponseEntity<>("added to collections", HttpStatus.OK);
-            }
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (Exception e) {
-            System.out.println("e" + e);
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
+public ResponseEntity<String> addCollections(@RequestBody @Validated CollectionsDto collectionsDto) {
+    try {
+        System.out.println("➡️ Received Collections DTO: " + collectionsDto); // ✅ Log full DTO
+
+        if (reportService.addToCollections(collectionsDto)) {
+            return new ResponseEntity<>("added to collections", HttpStatus.OK);
         }
+        return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
+    } catch (Exception e) {
+        System.out.println("❌ Exception in /collections:");
+        e.printStackTrace();  // ✅ Print exact error
+        return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
     }
+}
+
 
     @PostMapping("/dashboard-data")
     public ResponseEntity<GetReportResponse> getDashboardData(@RequestBody @Validated GetReportRequest getReportRequest) {
