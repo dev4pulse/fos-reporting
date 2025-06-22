@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Employee Registration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        .register-box {
+          max-width: 600px;
+          margin: 60px auto;
+          padding: 30px;
+          background-color: #fff;
+          border-radius: 10px;
+          box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+        }
+        .name-fields {
+          display: flex;
+          gap: 10px;
+        }
+        .name-fields input {
+          flex: 1;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="#">⛽ Pulse</a>
+        <div class="collapse navbar-collapse justify-content-end">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="login.html" class="nav-link">Login</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Registration Form -->
+<div class="container">
+    <div class="register-box">
+        <h3 class="text-center mb-4">Employee Registration</h3>
+        <form id="registrationForm">
+            <div class="name-fields mb-3">
+                <input type="text" id="firstName" class="form-control" placeholder="First Name" required />
+                <input type="text" id="lastName" class="form-control" placeholder="Last Name" required />
+            </div>
+
+            <div class="mb-3">
+                <input type="email" id="email" class="form-control" placeholder="Email (optional)" />
+            </div>
+
+            <div class="mb-3">
+                <input type="tel" id="phone" class="form-control" placeholder="Phone Number" required />
+            </div>
+
+            <div class="mb-3">
+                <textarea id="address" class="form-control" rows="3" placeholder="Address" required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <input type="text" id="aadhar" class="form-control" placeholder="Aadhar Number (optional)" />
+            </div>
+
+            <div class="mb-3">
+                <input type="password" id="password" class="form-control" placeholder="Password" required />
+            </div>
+
+            <div class="mb-3">
+                <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm Password" required />
+            </div>
+
+            <div class="mb-3 form-check">
+                <input type="checkbox" id="showPassword" class="form-check-input" />
+                <label class="form-check-label" for="showPassword">Show Passwords</label>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Register</button>
+        </form>
+        <div id="message" class="text-center mt-3"></div>
+    </div>
+</div>
+
+<!-- Script -->
+<script>
+    document.getElementById("showPassword").addEventListener("change", function () {
+      const type = this.checked ? "text" : "password";
+      document.getElementById("password").type = type;
+      document.getElementById("confirmPassword").type = type;
+    });
+
+    document.getElementById("registrationForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const firstName = document.getElementById("firstName").value.trim();
+      const lastName = document.getElementById("lastName").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const aadhar = document.getElementById("aadhar").value.trim();
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+      const message = document.getElementById("message");
+
+      if (password !== confirmPassword) {
+        message.innerHTML = `<span class="text-danger">Passwords do not match!</span>`;
+        return;
+      }
+
+      const payload = {
+        firstName,
+        lastName,
+        email,
+        phone,
+        address,
+        aadhar,
+        password
+      };
+
+      try {
+        const res = await fetch("http://localhost:8080/api/employees/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          message.innerHTML = `<span class="text-success">${result.message || "Registration successful!"}</span><br>
+            <a href="index.html" class="btn btn-link">Go to Login Page</a>`;
+          document.getElementById("registrationForm").reset();
+        } else {
+          message.innerHTML = `<span class="text-danger">${result.message || "Registration failed!"}</span>`;
+        }
+      } catch (err) {
+        console.error(err);
+        message.innerHTML = `<span class="text-danger">Error connecting to server.</span>`;
+      }
+    });
+</script>
+
+</body>
+</html>
