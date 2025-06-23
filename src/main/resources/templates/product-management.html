@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Create / Delete Product</title>
+    <style>
+        body {
+          font-family: 'Segoe UI', sans-serif;
+          background-color: #f4f6f8;
+          margin: 0;
+          padding: 0;
+          color: #333;
+        }
+
+        .container {
+          max-width: 1200px;
+          margin: auto;
+          padding: 20px;
+        }
+
+        .main-title {
+          text-align: center;
+          font-size: 2rem;
+          color: #2c3e50;
+          margin-bottom: 30px;
+        }
+
+        .section-title {
+          font-size: 1.5rem;
+          color: #34495e;
+          margin-bottom: 15px;
+        }
+
+        .product-table {
+          display: grid;
+          grid-template-columns: 1fr 0.3fr;
+          font-weight: bold;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          overflow: hidden;
+        }
+
+        .product-header, .product-row {
+          display: contents;
+        }
+
+        .product-header div,
+        .product-row div {
+          padding: 12px;
+          border-bottom: 1px solid #ddd;
+          background-color: #ecf0f1;
+        }
+
+        .product-row:nth-child(even) div {
+          background-color: #fff;
+        }
+
+        .delete-btn {
+          background-color: #e74c3c;
+          color: #fff;
+          border: none;
+          padding: 8px 12px;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+
+        .delete-btn:hover {
+          background-color: #c0392b;
+        }
+
+        .create-section {
+          margin-top: 40px;
+          background-color: #fff;
+          padding: 20px;
+          border-radius: 8px;
+          border: 1px solid #ccc;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          margin-bottom: 15px;
+        }
+
+        .form-group label {
+          font-weight: 600;
+          margin-bottom: 5px;
+        }
+
+        .form-group input {
+          padding: 8px;
+          border: 1px solid #aaa;
+          border-radius: 4px;
+        }
+
+        .submit-btn {
+          background-color: #2ecc71;
+          color: white;
+          padding: 10px 20px;
+          border: none;
+          border-radius: 6px;
+          font-weight: bold;
+          cursor: pointer;
+        }
+
+        .submit-btn:hover {
+          opacity: 0.85;
+        }
+
+        .error-msg {
+          color: red;
+          margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="main-title">Create / Delete Product</h1>
+
+    <!-- Section 1: Product List -->
+    <section>
+        <h2 class="section-title">Existing Products</h2>
+        <div class="product-table">
+            <div class="product-header">
+                <div>Product Name</div>
+                <div>Action</div>
+            </div>
+            <div id="product-list">
+                <!-- JS will populate rows -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Create New Product -->
+    <section class="create-section">
+        <h2 class="section-title">Add New Product</h2>
+        <form id="product-form">
+            <div class="form-group">
+                <label for="product-name">Product Name</label>
+                <input type="text" id="product-name" required />
+            </div>
+
+            <div class="form-group">
+                <label for="quantity">Quantity in Liters</label>
+                <input type="number" id="quantity" min="1" required />
+            </div>
+
+            <div class="form-group">
+                <label for="datetime">Date & Time</label>
+                <input type="datetime-local" id="datetime" required />
+            </div>
+
+            <button type="submit" class="submit-btn">Submit</button>
+            <div id="error-msg" class="error-msg"></div>
+        </form>
+    </section>
+</div>
+
+<script>
+    const apiGetUrl = 'https://your-api.com/api/products';
+    const apiPostUrl = 'https://your-api.com/api/products/create';
+    const apiDeleteUrl = 'https://your-api.com/api/products'; // DELETE /{id}
+
+    const productListEl = document.getElementById("product-list");
+    const form = document.getElementById("product-form");
+    const errorMsg = document.getElementById("error-msg");
+
+    let currentProducts = [];
+
+    // Fetch and render products
+    function loadProducts() {
+      productListEl.innerHTML = "";
+
+      fetch(apiGetUrl)
+        .then(res => res.json())
+        .then(products => {
+          currentProducts = products;
+          products.forEach(product => {
+            const row = document.createElement("div");
+            row.className = "product-row";
+            row.innerHTML = `
+              <div>${product.name}</div>
+              <div><button class="delete-btn" onclick="deleteProduct('${product.id}')">Delete</button></div>
+            `;
+            productListEl.appendChild(row);
+          });
+        })
+        .catch(err => {
+          console.error("Failed to fetch products:", err);
+          productListEl.innerHTML = `<div class="error-msg">Could not load products.</div>`;
+        });
+    }
+
+    // Delete a product
+    function deleteProduct(id) {
+      fetch(`${apiDeleteUrl}/${id}`, {
+        method: "DELETE"
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("Delete failed");
+          loadProducts();
+        })
+        .catch(err => {
+          console.error("Delete failed:", err);
+          alert("Failed to delete product.");
+        });
+    }
+
+    // Add new product
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      errorMsg.textContent = "";
+
+      const name = document.getElementById("product-name").value.trim();
+      const quantity = parseInt(document.getElementById("quantity").value);
+      const datetime = document.getElementById("datetime").value;
+
+      if (!name || !quantity || !datetime) {
+        errorMsg.textContent = "Please fill all fields.";
+        return;
+      }
+
+      // Prevent duplicate products (case-insensitive)
+      const exists = currentProducts.some(p => p.name.toLowerCase() === name.toLowerCase());
+      if (exists) {
+        errorMsg.textContent = "This product already exists.";
+        return;
+      }
+
+      const product = { name, quantity, datetime };
+
+      fetch(apiPostUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(product)
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("Submit failed");
+          return res.json();
+        })
+        .then(() => {
+          form.reset();
+          loadProducts();
+        })
+        .catch(err => {
+          console.error("Submit failed:", err);
+          errorMsg.textContent = "Failed to add product.";
+        });
+    });
+
+    // Initial load
+    loadProducts();
+</script>
+</body>
+</html>
