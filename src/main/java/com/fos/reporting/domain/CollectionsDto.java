@@ -25,4 +25,3 @@ public class CollectionsDto {
     // ✅ NEW: List of borrowers instead of single string
     private List<BorrowerDto> borrowers;
 }
-

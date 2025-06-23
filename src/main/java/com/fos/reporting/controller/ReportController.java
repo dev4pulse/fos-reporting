@@ -40,13 +40,13 @@ public class ReportController {
         }
     }
 
-    // === New: fetch prior closing-stock for a given product & subProduct ===
+    // === New: fetch prior closing-stock for a given product & gun ===
     @GetMapping("/sales/last")
     public ResponseEntity<Map<String, Float>> getLastClosing(
             @RequestParam String productName,
-            @RequestParam String subProduct
+            @RequestParam String gun
     ) {
-        float last = reportService.getLastClosing(productName, subProduct);
+        float last = reportService.getLastClosing(productName, gun);
         return ResponseEntity.ok(Map.of("lastClosing", last));
     }
 

@@ -7,6 +7,27 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script>
+    function recalcRow(row) {
+      const o = parseFloat(row.querySelector('.opening').value) || 0;
+      const c = parseFloat(row.querySelector('.closing').value) || 0;
+      const t = parseFloat(row.querySelector('.testing').value) || 0;
+      const p = parseFloat(row.querySelector('.price').value) || 0;
+
+      const liters = Math.max(c - o - t, 0);
+      row.querySelector('.sales-liters').value = liters.toFixed(2);
+      row.querySelector('.sales-rupees').value = (liters * p).toFixed(2);
+      recalcCollection();
+    }
+
+    // 🔄 Attach listeners to inputs for live recalculation
+    function attachRowListeners(row) {
+      ['opening','closing','testing','price'].forEach(cls => {
+        row.querySelector('.' + cls)
+           .addEventListener('input', () => recalcRow(row));
+      });
+      recalcRow(row);
+    }
+
     // UNCHANGED: Add new product row
     function addProductRow() {
       const container = document.getElementById("products");
@@ -42,6 +63,12 @@
         <div class="col-md-4">
           <input type="number" step="any" class="form-control testing" placeholder="Testing">
         </div>
+        <div class="col-md-4">
+          <input type="number" step="any" class="form-control sales-liters" placeholder="Sales in Liters" readonly>
+        </div>
+        <div class="col-md-4">
+          <input type="number" step="any" class="form-control sales-rupees" placeholder="Sales in Rupees" readonly>
+        </div>
         <div class="col-md-4 text-end">
           <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="removeProductRow(this)">Remove</button>
         </div>
@@ -57,7 +84,7 @@
         const sub = subInput.value.trim();
         if (!prod || !sub) return;
 
-        fetch(`/sales/last?productName=${encodeURIComponent(prod)}&subProduct=${encodeURIComponent(sub)}`)
+        fetch(`/sales/last?productName=${encodeURIComponent(prod)}&gun=${encodeURIComponent(sub)}`)
           .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
           .then(data => {
             openingInput.value = data.lastClosing;
@@ -67,8 +94,36 @@
 
       productInput.addEventListener("change", updateOpening);
       subInput.addEventListener("change", updateOpening);
+
+      // 🔄 Attach listener for auto-calculation
+      attachRowListeners(div);
     }
 
+    // 🔄 3. Collection calculations (pulls sum of sales)
+    function getTotalSalesInRupees() {
+      let total = 0;
+      document.querySelectorAll('.sales-rupees').forEach(el => {
+        total += parseFloat(el.value)||0;
+      });
+      return total;
+    }
+    function recalcCollection() {
+      const cash = parseFloat(document.getElementById("cashReceived").value)||0;
+      const phone = parseFloat(document.getElementById("phonePay").value)||0;
+      const card = parseFloat(document.getElementById("creditCard").value)||0;
+      const sales = getTotalSalesInRupees();
+
+      const total = cash + phone + card;
+      document.getElementById("totalCollection").value = total.toFixed(2);
+      document.getElementById("shortCollections").value = (total - sales).toFixed(2);
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+      ['cashReceived','phonePay','creditCard'].forEach(id => {
+        document.getElementById(id).addEventListener('input', recalcCollection);
+      });
+      recalcCollection()
+    });
+    
     // UNCHANGED: Remove row and collect data
     function removeProductRow(button) {
       button.closest('.product-group').remove();
@@ -95,24 +150,33 @@
       container.appendChild(div);
     }
 
-    function collectProducts() {
-      const groups = document.querySelectorAll(".product-group");
-      const products = [];
+  function collectProducts() {
+  const groups = document.querySelectorAll(".product-group");
+  const products = [];
 
-      groups.forEach(group => {
-        const fields = group.querySelectorAll("select, input");
-        products.push({
-          productName: fields[0].value,
-          subProduct: fields[1].value,
-          opening: parseFloat(fields[2].value || 0),
-          closing: parseFloat(fields[3].value || 0),
-          price: parseFloat(fields[4].value || 0),
-          testing: parseFloat(fields[5].value || 0)
-        });
-      });
+  for (let group of groups) {
+    const fields = group.querySelectorAll("select, input");
+    const opening = parseFloat(fields[2].value || 0);
+    const closing = parseFloat(fields[3].value || 0);
 
-      return products;
+    if (closing < opening) {
+      alert("Closing value must be greater than or equal to Opening value.");
+      throw new Error("Invalid closing value");
     }
+
+    products.push({
+      productName: fields[0].value,
+      gun: fields[1].value,
+      opening: opening,
+      closing: closing,
+      price: parseFloat(fields[4].value || 0),
+      testing: parseFloat(fields[5].value || 0)
+    });
+  }
+
+  return products;
+}
+
 
     // CHANGED: Use shared date and employee ID fields
     function submitSales(event) {
@@ -229,8 +293,9 @@
       <div class="col-md-6"><input type="number" step="any" class="form-control" id="cashReceived" placeholder="Cash Received"></div>
       <div class="col-md-6"><input type="number" step="any" class="form-control" id="phonePay" placeholder="Phone Pay"></div>
       <div class="col-md-6"><input type="number" step="any" class="form-control" id="creditCard" placeholder="Credit Card"></div>
-      <div class="col-md-6"><input type="number" step="any" class="form-control" id="debtRecovered" placeholder="Debt Recovered"></div>
-      <div class="col-md-6"><input type="number" step="any" class="form-control" id="shortCollections" placeholder="Short Collections"></div>
+      <div class="col-md-6"><input type="number" step="any" class="form-control" id="shortCollections" placeholder="Short Collections" readonly></div>
+      <div class="col-md-6"><input type="number" step="any" class="form-control" id="totalCollection" placeholder="Total Collection" readonly></div>
+
     </div>
     <div id="borrowers"></div>
     <button type="button" class="btn btn-outline-secondary mb-3" onclick="addBorrowerRow()">Add Borrow</button>
@@ -239,5 +304,3 @@
 </div>
 </body>
 </html>
-
-
