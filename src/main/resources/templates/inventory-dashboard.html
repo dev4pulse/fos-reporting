@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Inventory Dashboard</title>
+    <style>
+        body {
+          background-color: #f9f9f9;
+          margin: 0;
+          padding: 0;
+          color: #333;
+        }
+
+        .container {
+          max-width: 1200px;
+          margin: auto;
+          padding: 20px;
+        }
+
+        .main-title {
+          text-align: center;
+          font-size: 2rem;
+          color: #2c3e50;
+          margin-bottom: 30px;
+        }
+
+        .section-title {
+          font-size: 1.5rem;
+          color: #34495e;
+          margin-bottom: 15px;
+        }
+
+        .inventory-table {
+          display: grid;
+          grid-template-rows: auto 1fr;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+
+        .inventory-header,
+        .inventory-row {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          padding: 12px;
+          background-color: #ecf0f1;
+          font-weight: bold;
+          border-bottom: 1px solid #ddd;
+        }
+
+        .inventory-row {
+          background-color: #fff;
+          font-weight: normal;
+        }
+
+        .inventory-row:nth-child(even) {
+          background-color: #f4f6f8;
+        }
+
+        .manage-inventory {
+          margin-top: 40px;
+        }
+
+        .inventory-form {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          background-color: #fff;
+          padding: 20px;
+          border-radius: 8px;
+          border: 1px solid #ccc;
+        }
+
+        .entry-block {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 20px;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .form-group label {
+          font-weight: 600;
+          margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+          padding: 8px;
+          border: 1px solid #aaa;
+          border-radius: 4px;
+        }
+
+        .button-group {
+          display: flex;
+          justify-content: flex-end;
+          gap: 10px;
+        }
+
+        .button-group button {
+          padding: 10px 20px;
+          border: none;
+          border-radius: 6px;
+          background-color: #2ecc71;
+          color: white;
+          font-weight: bold;
+          cursor: pointer;
+          transition: 0.3s ease;
+        }
+
+        #add-new {
+          background-color: #3498db;
+        }
+
+        .button-group button:hover {
+          opacity: 0.85;
+        }
+
+        .error-msg {
+          color: red;
+          padding: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="main-title">Inventory Dashboard</h1>
+
+    <!-- Section 1: Read-only Inventory Table -->
+    <section class="inventory-section">
+        <h2 class="section-title">Today Inventory Details</h2>
+        <div class="inventory-table">
+            <div class="inventory-header">
+                <div>Product</div>
+                <div>Tank Capacity (L)</div>
+                <div>Current Inventory (L)</div>
+                <div>Booking Limit (L)</div>
+            </div>
+            <div id="inventory-data" class="inventory-body">
+                <!-- JS will inject rows here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 2: Manage Inventory -->
+    <section class="manage-inventory">
+        <h2 class="section-title">Manage Inventory</h2>
+        <form id="inventory-form" class="inventory-form">
+            <div id="entry-container">
+                <!-- JS will inject entry blocks -->
+            </div>
+            <div class="button-group">
+                <button type="button" id="add-new">Add New</button>
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<script>
+    const apiGetUrl = "https://your-api.com/api/inventory"; // Replace with actual URL
+    const apiPostUrl = "https://your-api.com/api/inventory/update"; // Replace with actual URL
+
+    const inventoryBody = document.getElementById("inventory-data");
+    const entryContainer = document.getElementById("entry-container");
+    const addNewBtn = document.getElementById("add-new");
+    const form = document.getElementById("inventory-form");
+    let productList = [];
+
+    // Fetch products and render table + first block
+    fetch(apiGetUrl)
+      .then(res => res.json())
+      .then(data => {
+        // Render Section 1
+        data.forEach(item => {
+          const row = document.createElement("div");
+          row.className = "inventory-row";
+          row.innerHTML = `
+            <div>${item.product}</div>
+            <div>${item.tankCapacity}</div>
+            <div>${item.currentInventory}</div>
+            <div>${item.bookingLimit}</div>
+          `;
+          inventoryBody.appendChild(row);
+        });
+
+        productList = data.map(item => item.product);
+        addEntryBlock(); // initial entry
+      })
+      .catch(error => {
+        console.error("Failed to load inventory:", error);
+        inventoryBody.innerHTML = `<div class="error-msg">Failed to load inventory data.</div>`;
+      });
+
+    // Add a new entry block
+    function addEntryBlock() {
+      const block = document.createElement("div");
+      block.className = "entry-block";
+      block.innerHTML = `
+        <div class="form-group">
+          <label>Select Product</label>
+          <select required>
+            ${productList.map(p => `<option value="${p}">${p}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Enter Quantity (Liters)</label>
+          <input type="number" min="1" required />
+        </div>
+        <div class="form-group">
+          <label>Date & Time</label>
+          <input type="datetime-local" required />
+        </div>
+      `;
+      entryContainer.appendChild(block);
+    }
+
+    // Add New button adds another block
+    addNewBtn.addEventListener("click", () => {
+      addEntryBlock();
+    });
+
+    // Submit all blocks
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const entries = [];
+
+      document.querySelectorAll(".entry-block").forEach(block => {
+        const product = block.querySelector("select").value;
+        const quantity = parseInt(block.querySelector("input[type='number']").value);
+        const datetime = block.querySelector("input[type='datetime-local']").value;
+
+        if (product && quantity && datetime) {
+          entries.push({ product, quantity, datetime });
+        }
+      });
+
+      if (entries.length === 0) {
+        alert("Please add at least one entry.");
+        return;
+      }
+
+      fetch(apiPostUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(entries)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to update inventory.");
+        return res.json();
+      })
+      .then(() => {
+        alert("Inventory updated successfully!");
+        entryContainer.innerHTML = "";
+        addEntryBlock();
+      })
+      .catch(err => {
+        console.error("Submit failed:", err);
+        alert("Failed to update inventory.");
+      });
+    });
+</script>
+</body>
+</html>
