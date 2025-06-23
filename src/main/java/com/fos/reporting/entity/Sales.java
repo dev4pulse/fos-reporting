@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,13 +22,16 @@ public class Sales {
     private LocalDateTime dateTime;
     @NotNull
     private String productName;
-    private String subProduct;
+    @Column(name = "gun")
+    private String gun;
     @NotNull
     private int employeeId;
     private float openingStock;
     private float closingStock;
     private float testingTotal;
-    private float sale;
+    @Column(name = "sales_in_liters")
+    private BigDecimal salesInLiters;
     private float price;
-    private float saleAmount;
+    @Column(name = "sales_in_rupees")
+    private float salesInRupees;
 }

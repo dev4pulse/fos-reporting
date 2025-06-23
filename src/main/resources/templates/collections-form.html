@@ -20,7 +20,7 @@
                 borrowedAmount: parseFloat(document.getElementById("borrowedAmount").value || 0),
                 debtRecovered: parseFloat(document.getElementById("debtRecovered").value || 0),
                 borrower: document.getElementById("borrower").value,
-                badHandling: parseFloat(document.getElementById("badHandling").value || 0),
+                shortCollections: parseFloat(document.getElementById("shortCollections").value || 0),
                 expenses: parseFloat(document.getElementById("expenses").value || 0)
             };
 
@@ -105,8 +105,8 @@
     <label>Borrower:</label>
     <input type="text" id="borrower"><br>
 
-    <label>Bad Handling:</label>
-    <input type="number" step="any" id="badHandling"><br>
+    <label> shortCollections:</label>
+    <input type="number" step="any" id="shortCollections"><br>
 
     <label>Expenses:</label>
     <input type="number" step="any" id="expenses"><br><br>

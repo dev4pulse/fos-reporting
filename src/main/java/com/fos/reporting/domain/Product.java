@@ -11,7 +11,7 @@ import lombok.*;
 public class Product {
     @NotNull
     private String productName;
-    private String subProduct;
+    private String gun;
     private float closing;
     private float opening;
     @NotNull

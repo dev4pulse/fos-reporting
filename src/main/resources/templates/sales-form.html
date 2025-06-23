@@ -17,8 +17,8 @@
                 <label>Product Name:</label>
                 <input type="text" name="productName" required><br>
 
-                <label>Sub Product:</label>
-                <input type="text" name="subProduct"><br>
+                <label>Select Gun:</label>
+                <input type="text" name="Select Gun"><br>
 
                 <label>Opening:</label>
                 <input type="number" step="any" name="opening"><br>
@@ -43,7 +43,7 @@
                 const inputs = group.querySelectorAll("input");
                 const product = {
                     productName: inputs[0].value,
-                    subProduct: inputs[1].value,
+                    gun: inputs[1].value,
                     opening: parseFloat(inputs[2].value || 0),
                     closing: parseFloat(inputs[3].value || 0),
                     price: parseFloat(inputs[4].value),
