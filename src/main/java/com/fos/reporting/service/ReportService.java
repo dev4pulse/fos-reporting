@@ -95,8 +95,7 @@ public class ReportService {
             double receivedTotal = collectionsDto.getCashReceived() +
                     collectionsDto.getPhonePay() +
                     collectionsDto.getCreditCard() +
-                    collectionsDto.getBorrowedAmount() +
-                    collectionsDto.getDebtRecovered();
+                    collectionsDto.getBorrowedAmount();
 
 
             collections.setExpectedTotal(expectedTotal);

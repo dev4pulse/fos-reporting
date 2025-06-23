@@ -18,7 +18,6 @@
                 creditCard: parseFloat(document.getElementById("creditCard").value || 0),
                 creditCardStatus: document.getElementById("creditCardStatus").value,
                 borrowedAmount: parseFloat(document.getElementById("borrowedAmount").value || 0),
-                debtRecovered: parseFloat(document.getElementById("debtRecovered").value || 0),
                 borrower: document.getElementById("borrower").value,
                 shortCollections: parseFloat(document.getElementById("shortCollections").value || 0),
                 expenses: parseFloat(document.getElementById("expenses").value || 0)
@@ -98,9 +97,6 @@
 
     <label>Borrowed Amount:</label>
     <input type="number" step="any" id="borrowedAmount"><br>
-
-    <label>Debt Recovered:</label>
-    <input type="number" step="any" id="debtRecovered"><br>
 
     <label>Borrower:</label>
     <input type="text" id="borrower"><br>
