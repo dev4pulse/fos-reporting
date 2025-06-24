@@ -224,9 +224,11 @@
         body: JSON.stringify(data)
       })
         .then(res => res.text())
-        .then(msg => alert("Collections Saved: " + msg))
-        .catch(err => alert("Error: " + err));
-    }
+        .then(msg => {alert("Collections Saved: " + msg);
+    location.reload(); // 🔄 This is the added line
+  })
+  .catch(err => alert("Error: " + err));
+  }
 
     window.onload = () => addProductRow();
   </script>
