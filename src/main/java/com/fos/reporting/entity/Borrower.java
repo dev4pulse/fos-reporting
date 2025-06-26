@@ -12,17 +12,22 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class Borrower {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long borrowerId;
 
-    private String name;
-    private float amount;
+    @ManyToOne(optional = true)                   // allow nulls
+    @JoinColumn(name = "customer_id", nullable = true)
+    private Customer customer;
 
-    @Column(name = "borrowed_at")
-    private LocalDateTime borrowedAt;
+    @ManyToOne(optional = true)                   // allow nulls
+    @JoinColumn(name = "employee_id", nullable = true)
+    private Employee employee;
 
-    @ManyToOne
-    @JoinColumn(name = "collection_id")
-    private Collections collection;
+    @Column(name = "amount_borrowed", nullable = true)  // allow nulls
+    private Float amountBorrowed;                        // use object type so you can have null
+
+    @Column(name = "borrowed_date", nullable = true)    // allow nulls
+    private LocalDateTime borrowedDate;
 }

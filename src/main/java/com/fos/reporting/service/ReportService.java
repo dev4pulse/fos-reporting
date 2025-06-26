@@ -108,10 +108,8 @@ public class ReportService {
             if (collectionsDto.getBorrowers() != null) {
                 for (BorrowerDto b : collectionsDto.getBorrowers()) {
                     Borrower borrower = new Borrower();
-                    borrower.setName(b.getName());
-                    borrower.setAmount(b.getAmount());
-                    borrower.setBorrowedAt(LocalDateTime.now());
-                    borrower.setCollection(savedCollection);
+                    borrower.setAmountBorrowed(b.getAmountBorrowed());
+                    borrower.setBorrowedDate(LocalDateTime.now());
                     borrowerRepository.save(borrower);
                 }
             }

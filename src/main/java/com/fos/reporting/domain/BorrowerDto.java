@@ -6,6 +6,6 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BorrowerDto {
-    private String name;
-    private float amount;
+    private String customerName;
+    private float amountBorrowed;
 }

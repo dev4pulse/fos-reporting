@@ -24,8 +24,9 @@ public class Inventory {
     private String productName;
     @NotNull
     private float quantity;
+    @Builder.Default
     @NotNull
-    private int tankCapacity;
+    private int tankCapacity=25000;
     @NotNull
     private float currentLevel;
     @NotNull

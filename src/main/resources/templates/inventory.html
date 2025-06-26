@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Inventory Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link 
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" 
+    rel="stylesheet"
+  >
+  <link 
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" 
+    rel="stylesheet"
+  >
+  <style>
+    body { background: #b0d4f1 }
+    h1    { border: 2px solid #000; padding: .5rem }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <h1 class="text-center mb-4">Inventory Dashboard</h1>
+    <form id="f">
+      <div id="items"></div>
+      <button type="button" class="btn btn-outline-primary mb-3" onclick="addRow()">
+        Add Item
+      </button>
+      <button type="button" class="btn btn-success float-end" onclick="onAddToInventory()">
+        Add to Inventory
+      </button>
+    </form>
+  </div>
+
+  <template id="row">
+    <div class="row g-3 align-items-end mb-3">
+      <!-- product selector -->
+      <div class="col-md-2">
+        <select class="form-select" name="product" required onchange="setTotalCapacity(this)">
+          <option value="" disabled selected>Select Product</option>
+          <option>Petrol</option>
+          <option>Diesel</option>
+        </select>
+      </div>
+      <!-- quantity -->
+      <div class="col-md-2">
+        <input type="number" class="form-control" name="quantity" placeholder="Quantity" required>
+      </div>
+      <!-- total capacity (readonly, auto) -->
+      <div class="col-md-2">
+        <input type="number" class="form-control" name="totalCapacity" placeholder="Total Cap" readonly>
+      </div>
+      <!-- date/time -->
+      <div class="col-md-4">
+        <input type="text" class="form-control datetime" name="datetime" placeholder="Date & Time" required>
+      </div>
+      <!-- remove button -->
+      <div class="col-md-2 text-end">
+        <button type="button" class="btn btn-danger btn-sm" onclick="this.closest('.row').remove()">
+          Remove
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script>
+    // Flatpickr defaults
+    flatpickr.setDefaults({
+      enableTime: true,
+      dateFormat: "Y-m-d H:i:S",
+      altInput: true,
+      altFormat: "F j, Y h:i K",
+      defaultDate: new Date()
+    });
+
+    const tpl   = document.getElementById("row").content,
+          items = document.getElementById("items"),
+          form  = document.getElementById("f");
+
+    function addRow() {
+      const row = document.importNode(tpl, true);
+      items.appendChild(row);
+      flatpickr(items.lastElementChild.querySelector(".datetime"));
+    }
+
+    // set constant totalCapacity based on product
+    function setTotalCapacity(selectEl) {
+      const row = selectEl.closest('.row');
+      const tot = row.querySelector('[name=totalCapacity]');
+      if (selectEl.value === 'Petrol')      tot.value = 25000;
+      else if (selectEl.value === 'Diesel') tot.value = 30000;
+      else                                   tot.value = '';
+    }
+
+    function onAddToInventory() {
+      const data = Array.from(items.children).map(row => ({
+        product:       row.querySelector('[name=product]').value,
+        quantity:      +row.querySelector('[name=quantity]').value,
+        totalCapacity:+row.querySelector('[name=totalCapacity]').value,
+        datetime:      row.querySelector('[name=datetime]').value
+      }));
+      console.log('Payload →', data);
+      // TODO: fetch('/inventory', { method:'POST', body: JSON.stringify(data), headers:{'Content-Type':'application/json'} });
+      alert('Inventory added!');
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      addRow();  // start with one blank row
+    });
+  </script>
+</body>
+</html>
