@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borrow Over Money</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          background-color: #f2f2f2;
+          padding: 20px;
+        }
+
+        .container {
+          max-width: 700px;
+          margin: 0 auto;
+          background: white;
+          padding: 30px;
+          border-radius: 10px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+          text-align: center;
+          margin-bottom: 10px;
+        }
+
+        h2 {
+          text-align: center;
+          margin-bottom: 30px;
+          font-size: 1.2rem;
+          color: #666;
+        }
+
+        form {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+        }
+
+        label {
+          margin-bottom: 5px;
+          font-weight: bold;
+        }
+
+        input, select {
+          padding: 10px;
+          font-size: 1rem;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+        }
+
+        .full-width {
+          grid-column: span 2;
+        }
+
+        button {
+          padding: 12px;
+          font-size: 1rem;
+          background-color: #007bff;
+          color: white;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+          transition: background 0.3s ease;
+        }
+
+        button:hover {
+          background-color: #0056b3;
+        }
+
+        #dueAmountDisplay {
+          font-size: 1rem;
+          color: #333;
+          margin-top: 5px;
+        }
+
+        @media (max-width: 600px) {
+          form {
+            grid-template-columns: 1fr;
+          }
+
+          .full-width {
+            grid-column: span 1;
+          }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Borrow Over Money</h1>
+    <h2>Collection Entry</h2>
+
+    <form id="collectionForm">
+        <div class="form-group">
+            <label for="borrower">Select Borrower</label>
+            <select id="borrower" name="borrower" required></select>
+            <div id="dueAmountDisplay">Due: ₹<span id="dueAmount">0.00</span></div>
+        </div>
+
+        <div class="form-group">
+            <label for="handCash">Hand Cash Received</label>
+            <input type="number" id="handCash" name="handCash" required>
+        </div>
+
+        <div class="form-group">
+            <label for="creditCard">Credit Card</label>
+            <input type="number" id="creditCard" name="creditCard" required>
+        </div>
+
+        <div class="form-group">
+            <label for="phonePay">Phone Pay</label>
+            <input type="number" id="phonePay" name="phonePay" required>
+        </div>
+
+        <div class="form-group">
+            <label for="totalCollections">Total Collections</label>
+            <input type="number" id="totalCollections" name="totalCollections" required>
+        </div>
+
+        <div class="form-group">
+            <label for="saleInRupees">Sale in Rupees</label>
+            <input type="number" id="saleInRupees" name="saleInRupees" required>
+        </div>
+
+        <div class="form-group">
+            <label for="collectionShort">Collection Short</label>
+            <input type="text" id="collectionShort" name="collectionShort" required>
+        </div>
+
+        <div class="form-group full-width">
+            <button type="submit">Submit</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const borrowerSelect = document.getElementById("borrower");
+    const dueAmountSpan = document.getElementById("dueAmount");
+    let currentDue = 0;
+
+    fetch("https://example.com/api/borrowers")
+      .then(response => response.json())
+      .then(data => {
+        data.forEach(borrower => {
+          const option = document.createElement("option");
+          option.value = borrower.id;
+          option.textContent = `${borrower.name} (ID: ${borrower.id})`;
+          borrowerSelect.appendChild(option);
+        });
+      });
+
+    borrowerSelect.addEventListener("change", () => {
+      const borrowerId = borrowerSelect.value;
+      if (borrowerId) {
+        fetch(`https://example.com/api/borrowers/${borrowerId}/due`)
+          .then(response => response.json())
+          .then(data => {
+            currentDue = parseFloat(data.dueAmount);
+            dueAmountSpan.textContent = currentDue.toFixed(2);
+          });
+      } else {
+        currentDue = 0;
+        dueAmountSpan.textContent = "0.00";
+      }
+    });
+
+    document.getElementById("collectionForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const handCash = parseFloat(document.getElementById("handCash").value) || 0;
+      const creditCard = parseFloat(document.getElementById("creditCard").value) || 0;
+      const phonePay = parseFloat(document.getElementById("phonePay").value) || 0;
+      const totalPaid = handCash + creditCard + phonePay;
+      const updatedDue = currentDue - totalPaid;
+
+      const formData = {
+        borrowerId: document.getElementById("borrower").value,
+        handCash: handCash,
+        creditCard: creditCard,
+        phonePay: phonePay,
+        totalCollections: document.getElementById("totalCollections").value,
+        saleInRupees: document.getElementById("saleInRupees").value,
+        collectionShort: document.getElementById("collectionShort").value,
+        updatedDue: updatedDue.toFixed(2)
+      };
+
+      fetch("https://example.com/api/collections", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("Failed to submit data");
+        return response.json();
+      })
+      .then(data => {
+        alert("Data submitted successfully!");
+        document.getElementById("collectionForm").reset();
+        currentDue = updatedDue;
+        dueAmountSpan.textContent = updatedDue.toFixed(2);
+      })
+      .catch(error => {
+        alert("Error: " + error.message);
+      });
+    });
+</script>
+</body>
+</html>
