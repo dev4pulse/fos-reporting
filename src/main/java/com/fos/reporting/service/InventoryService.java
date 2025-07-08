@@ -11,13 +11,14 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class InventoryService {
-    @Autowired private InventoryRepository inventoryRepository;
+    @Autowired
+    private InventoryRepository inventoryRepository;
 
     public boolean addToInventory(InventoryDto inventoryDto) {
         Inventory inventory = new Inventory();
         BeanUtils.copyProperties(inventoryDto, inventory);
         int tankCapacity = 25000;
-        inventory.setBookingLimit(tankCapacity-inventoryDto.getQuantity());
+        inventory.setBookingLimit(tankCapacity - inventoryDto.getQuantity());
         inventoryRepository.save(inventory);
         return true;
     }

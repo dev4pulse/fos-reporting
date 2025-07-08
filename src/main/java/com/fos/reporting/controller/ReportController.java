@@ -1,6 +1,8 @@
 package com.fos.reporting.controller;
 
 import com.fos.reporting.domain.*;           // wildcard import for CollectionsDto, EntryProduct, etc.
+import com.fos.reporting.entity.Sales;
+import com.fos.reporting.repository.SalesRepository;
 import com.fos.reporting.service.ReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -14,9 +16,11 @@ public class ReportController {
 
     @Autowired
     private ReportService reportService;
+    @Autowired
+    private SalesRepository salesRepository;
 
     // === Unchanged: simple health-check endpoint ===
-     @GetMapping("/test")
+    @GetMapping("/test")
     public ResponseEntity<String> ping() {
         try {
             System.out.println("report service call");
@@ -51,20 +55,20 @@ public class ReportController {
     }
 
     @PostMapping("/collections")
-public ResponseEntity<String> addCollections(@RequestBody @Validated CollectionsDto collectionsDto) {
-    try {
-        System.out.println("➡️ Received Collections DTO: " + collectionsDto); // ✅ Log full DTO
+    public ResponseEntity<String> addCollections(@RequestBody @Validated CollectionsDto collectionsDto) {
+        try {
+            System.out.println("➡️ Received Collections DTO: " + collectionsDto); // ✅ Log full DTO
 
-        if (reportService.addToCollections(collectionsDto)) {
-            return new ResponseEntity<>("added to collections", HttpStatus.OK);
+            if (reportService.addToCollections(collectionsDto)) {
+                return new ResponseEntity<>("added to collections", HttpStatus.OK);
+            }
+            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            System.out.println("❌ Exception in /collections:");
+            e.printStackTrace();  // ✅ Print exact error
+            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
-    } catch (Exception e) {
-        System.out.println("❌ Exception in /collections:");
-        e.printStackTrace();  // ✅ Print exact error
-        return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
     }
-}
 
 
     @PostMapping("/dashboard-data")
@@ -76,5 +80,19 @@ public ResponseEntity<String> addCollections(@RequestBody @Validated Collections
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/sales/price")
+    public ResponseEntity<Float> getProductPrice(
+            @RequestParam String productName,
+            @RequestParam String gun
+    ) {
+        Sales last = salesRepository.findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
+        if (last != null) {
+            return ResponseEntity.ok(last.getPrice());
+        } else {
+            return ResponseEntity.ok(0f); // or return 404 if preferred
+        }
+    }
+
 }
 

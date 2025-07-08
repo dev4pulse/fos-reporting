@@ -35,7 +35,7 @@ public class ReportService {
      */
     public Float getLastClosing(String productName, String gun) {
         Sales last = salesRepository
-            .findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
+                .findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
         return (last != null) ? last.getClosingStock() : 0f;
     }
 
@@ -64,7 +64,7 @@ public class ReportService {
                 sales.setSalesInLiters(saleVolume);
 
                 sales.setPrice(product.getPrice());
-    // ★ Updated: calculate saleAmount based on BigDecimal
+                // ★ Updated: calculate saleAmount based on BigDecimal
                 BigDecimal saleAmt = saleVolume.multiply(BigDecimal.valueOf(product.getPrice()));
                 sales.setSalesInRupees(saleAmt.floatValue());
 
