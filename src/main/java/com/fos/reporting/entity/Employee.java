@@ -1,4 +1,5 @@
 package com.fos.reporting.entity;
+
 import java.time.LocalDate;
 
 import jakarta.persistence.*;
@@ -34,4 +35,8 @@ public class Employee {
     private LocalDate endDate;
     @NotNull
     private boolean isActive;
+    @Column(nullable = false, unique = true)
+    private String username;
+    @Column(nullable = false)
+    private String password;
 }
