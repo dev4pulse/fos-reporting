@@ -18,14 +18,14 @@ import lombok.*;
 public class Employee {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long employeeId;
+    private long employeeId;
     @NotNull
     private String employeeFirstName;
     @NotNull
     private String employeeLastName;
     @Email
     private String employeeEmail;
-    private int employeePhoneNumber;
+    private long employeePhoneNumber;
     @NotNull
     private String employeeRole;
     @NotNull
