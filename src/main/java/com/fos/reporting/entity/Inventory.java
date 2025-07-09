@@ -9,11 +9,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "Inventory")
 @Data
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 public class Inventory {
     @Id
     @GeneratedValue(strategy= GenerationType.AUTO)
@@ -31,7 +26,7 @@ public class Inventory {
     @NotNull
     private float bookingLimit;
     @NotNull
-    private LocalDateTime lastUpdated; // Changed from Date to LocalDateTime for better precision
+    private LocalDateTime lastUpdated;
     @NotNull
     private Long employeeId;
 }

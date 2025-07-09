@@ -7,7 +7,5 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CollectionsRepository extends JpaRepository<Collections, Long> {
-
     List<Collections> findByDateTimeBetween(LocalDateTime fromDate, LocalDateTime toDate);
-
 }

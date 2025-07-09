@@ -1,12 +1,9 @@
 package com.fos.reporting.domain;
 
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
 @Data
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
 public class ReportData {
     private float saleInLtr;

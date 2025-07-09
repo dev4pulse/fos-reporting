@@ -6,17 +6,13 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Data
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
 public class InventoryDto {
     @NotNull
     private String productName;
     @NotNull
     private float quantity;
     @NotNull
-    private LocalDateTime lastUpdated; // Changed from Date to LocalDateTime for better precision
+    private LocalDateTime lastUpdated;
     @NotNull
     private int employeeId;
 }

@@ -5,166 +5,163 @@
     <title>Sales & Collections Entry</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script>
-        function recalcRow(row) {
-          const o = parseFloat(row.querySelector('.opening').value) || 0;
-          const c = parseFloat(row.querySelector('.closing').value) || 0;
-          const t = parseFloat(row.querySelector('.testing').value) || 0;
-          const p = parseFloat(row.querySelector('.price').value) || 0;
+</head>
+<body class="bg-body-tertiary">
+<div class="container py-4">
+    <h2 class="mb-4">Sales & Collections Dashboard</h2>
+    <div class="row g-3 mb-3">
+        <div class="col-md-6">
+            <input type="text" class="form-control" id="entryDate" placeholder="Date" required>
+        </div>
+        <div class="col-md-6">
+            <select name="employeeId" class="form-control" id="employeeDropdown" required>
+                <option value="">Select Employee ID and Name</option>
+            </select>
+        </div>
+    </div>
+    <form onsubmit="submitAll(event)" class="border p-4 rounded bg-white shadow-sm">
+        <h4>Sales Entry</h4>
+        <div id="products"></div>
+        <button type="button" class="btn btn-outline-primary mt-2" onclick="addProductRow()">Add Product</button>
+        <hr class="my-4">
+        <h4>Collections Entry</h4>
+        <div class="row g-3 mb-3">
+            <div class="col-md-6"><input type="number" step="any" class="form-control" id="cashReceived"
+                                         placeholder="Cash Received"></div>
+            <div class="col-md-6"><input type="number" step="any" class="form-control" id="phonePay"
+                                         placeholder="Phone Pay"></div>
+            <div class="col-md-6"><input type="number" step="any" class="form-control" id="creditCard"
+                                         placeholder="Credit Card"></div>
+            <div class="col-md-6"><input type="number" step="any" class="form-control" id="shortCollections"
+                                         placeholder="Short Collections" readonly></div>
+            <div class="col-md-6"><input type="number" step="any" class="form-control" id="totalCollection"
+                                         placeholder="Total Collection" readonly></div>
+        </div>
+        <div id="borrowers"></div>
+        <button type="button" class="btn btn-outline-secondary mb-3" onclick="addBorrowerRow()">Add Borrow</button>
+        <button type="submit" class="btn btn-success float-end">Submit All</button>
+    </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    function recalcRow(row) {
+      const o = parseFloat(row.querySelector('.opening').value) || 0;
+      const c = parseFloat(row.querySelector('.closing').value) || 0;
+      const t = parseFloat(row.querySelector('.testing').value) || 0;
+      const p = parseFloat(row.querySelector('.price').value) || 0;
+      const liters = Math.max(c - o - t, 0);
+      row.querySelector('.sales-liters').value = liters.toFixed(2);
+      row.querySelector('.sales-rupees').value = (liters * p).toFixed(2);
+      recalcCollection();
+    }
 
-          const liters = Math.max(c - o - t, 0);
-          row.querySelector('.sales-liters').value = liters.toFixed(2);
-          row.querySelector('.sales-rupees').value = (liters * p).toFixed(2);
-          recalcCollection();
-        }
+    function attachRowListeners(row) {
+      ['opening','closing','testing','price'].forEach(cls => {
+        row.querySelector('.' + cls).addEventListener('input', () => recalcRow(row));
+      });
+      recalcRow(row);
+    }
 
-        // 🔄 Attach listeners to inputs for live recalculation
-        function attachRowListeners(row) {
-          ['opening','closing','testing','price'].forEach(cls => {
-            row.querySelector('.' + cls)
-               .addEventListener('input', () => recalcRow(row));
-          });
-          recalcRow(row);
-        }
+    function addProductRow() {
+      const container = document.getElementById("products");
+      const div = document.createElement("div");
+      div.className = "row g-2 mb-3 product-group border rounded p-3 bg-light position-relative";
 
-        // UNCHANGED: Add new product row
-        function addProductRow() {
-          const container = document.getElementById("products");
-          const div = document.createElement("div");
-          div.className = "row g-2 mb-3 product-group border rounded p-3 bg-light position-relative";
+      div.innerHTML = `
+        <div class="col-md-4">
+          <select class="form-control product-name" required>
+            <option value="" disabled selected>Select Product</option>
+            <option value="Petrol">Petrol</option>
+            <option value="Diesel">Diesel</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <select class="form-control sub-product" required>
+            <option value="" disabled selected>Select Sub Product</option>
+            <option value="G1">G1</option>
+            <option value="G2">G2</option>
+            <option value="G3">G3</option>
+          </select>
+        </div>
+        <div class="col-md-2"><input type="number" step="any" class="form-control opening" placeholder="Opening"></div>
+        <div class="col-md-2"><input type="number" step="any" class="form-control closing" placeholder="Closing"></div>
+        <div class="col-md-4"><input type="number" step="any" class="form-control price" placeholder="Price" required></div>
+        <div class="col-md-4"><input type="number" step="any" class="form-control testing" placeholder="Testing"></div>
+        <div class="col-md-4"><input type="number" step="any" class="form-control sales-liters" placeholder="Sales in Liters" readonly></div>
+        <div class="col-md-4"><input type="number" step="any" class="form-control sales-rupees" placeholder="Sales in Rupees" readonly></div>
+        <div class="col-md-4 text-end">
+          <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="removeProductRow(this)">Remove</button>
+        </div>
+      `;
+      container.appendChild(div);
 
-          div.innerHTML = `
-            <div class="col-md-4">
-              <select class="form-control product-name" required>
-                <option value="" disabled selected>Select Product</option>
-                <option value="Petrol">Petrol</option>
-                <option value="Diesel">Diesel</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <select class="form-control sub-product" required>
-                <option value="" disabled selected>Select Sub Product</option>
-                <option value="G1">G1</option>
-                <option value="G2">G2</option>
-                <option value="G3">G3</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <input type="number" step="any" class="form-control opening" placeholder="Opening">
-            </div>
-            <div class="col-md-2">
-              <input type="number" step="any" class="form-control closing" placeholder="Closing">
-            </div>
-            <div class="col-md-4">
-              <input type="number" step="any" class="form-control price" placeholder="Price" required>
-            </div>
-            <div class="col-md-4">
-              <input type="number" step="any" class="form-control testing" placeholder="Testing">
-            </div>
-            <div class="col-md-4">
-              <input type="number" step="any" class="form-control sales-liters" placeholder="Sales in Liters" readonly>
-            </div>
-            <div class="col-md-4">
-              <input type="number" step="any" class="form-control sales-rupees" placeholder="Sales in Rupees" readonly>
-            </div>
-            <div class="col-md-4 text-end">
-              <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="removeProductRow(this)">Remove</button>
-            </div>
-          `;
-          container.appendChild(div);
+      const productInput = div.querySelector('.product-name');
+      const subInput = div.querySelector('.sub-product');
+      const openingInput = div.querySelector('.opening');
 
-          const productInput = div.querySelector('.product-name');
-          const subInput = div.querySelector('.sub-product');
-          const openingInput = div.querySelector('.opening');
+      function updateOpeningAndPrice() {
+        const prod = productInput.value.trim();
+        const sub = subInput.value.trim();
+        if (!prod || !sub) return;
 
-          function updateOpeningAndPrice() {
-  const prod = productInput.value.trim();
-  const sub = subInput.value.trim();
-  if (!prod || !sub) return;
+        fetch(`/sales/last?productName=${encodeURIComponent(prod)}&gun=${encodeURIComponent(sub)}`)
+          .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
+          .then(data => { openingInput.value = data.lastClosing; })
+          .catch(console.error);
 
-  // 🔁 Get last closing
-  fetch(`/sales/last?productName=${encodeURIComponent(prod)}&gun=${encodeURIComponent(sub)}`)
-    .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
-    .then(data => {
-      openingInput.value = data.lastClosing;
-    })
-    .catch(console.error);
+        fetch(`/sales/price?productName=${encodeURIComponent(prod)}&gun=${encodeURIComponent(sub)}`)
+          .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
+          .then(price => {
+            div.querySelector('.price').value = price;
+            recalcRow(div);
+          })
+          .catch(console.error);
+      }
 
-  // 💰 Get price
-  fetch(`/sales/price?productName=${encodeURIComponent(prod)}&gun=${encodeURIComponent(sub)}`)
-    .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
-    .then(price => {
-      div.querySelector('.price').value = price;
-      recalcRow(div); // Recalculate totals after price is filled
-    })
-    .catch(console.error);
-}
+      productInput.addEventListener("change", updateOpeningAndPrice);
+      subInput.addEventListener("change", updateOpeningAndPrice);
+      attachRowListeners(div);
+    }
 
-productInput.addEventListener("change", updateOpeningAndPrice);
-subInput.addEventListener("change", updateOpeningAndPrice);
+    function removeProductRow(button) {
+      button.closest('.product-group').remove();
+    }
 
+    function addBorrowerRow() {
+      const container = document.getElementById("borrowers");
+      const div = document.createElement("div");
+      div.className = "row g-2 mb-2 borrower-group border rounded p-2 bg-light";
 
-          productInput.addEventListener("change", updateOpening);
-          subInput.addEventListener("change", updateOpening);
+      div.innerHTML = `
+        <div class="col-md-6"><input type="text" class="form-control borrower-name" placeholder="Borrower Name" required></div>
+        <div class="col-md-4"><input type="number" step="any" class="form-control borrower-amount" placeholder="Borrowed Amount" required></div>
+        <div class="col-md-2 d-flex justify-content-end align-items-start">
+          <button type="button" class="btn btn-danger" onclick="this.closest('.borrower-group').remove()">Remove</button>
+        </div>
+      `;
+      container.appendChild(div);
+    }
 
-          // 🔄 Attach listener for auto-calculation
-          attachRowListeners(div);
-        }
+    function getTotalSalesInRupees() {
+      let total = 0;
+      document.querySelectorAll('.sales-rupees').forEach(el => {
+        total += parseFloat(el.value)||0;
+      });
+      return total;
+    }
 
-        // 🔄 3. Collection calculations (pulls sum of sales)
-        function getTotalSalesInRupees() {
-          let total = 0;
-          document.querySelectorAll('.sales-rupees').forEach(el => {
-            total += parseFloat(el.value)||0;
-          });
-          return total;
-        }
-        function recalcCollection() {
-          const cash = parseFloat(document.getElementById("cashReceived").value)||0;
-          const phone = parseFloat(document.getElementById("phonePay").value)||0;
-          const card = parseFloat(document.getElementById("creditCard").value)||0;
-          const sales = getTotalSalesInRupees();
+    function recalcCollection() {
+      const cash = parseFloat(document.getElementById("cashReceived").value)||0;
+      const phone = parseFloat(document.getElementById("phonePay").value)||0;
+      const card = parseFloat(document.getElementById("creditCard").value)||0;
+      const sales = getTotalSalesInRupees();
+      const total = cash + phone + card;
+      document.getElementById("totalCollection").value = total.toFixed(2);
+      document.getElementById("shortCollections").value = (total - sales).toFixed(2);
+    }
 
-          const total = cash + phone + card;
-          document.getElementById("totalCollection").value = total.toFixed(2);
-          document.getElementById("shortCollections").value = (total - sales).toFixed(2);
-        }
-        document.addEventListener("DOMContentLoaded", () => {
-          ['cashReceived','phonePay','creditCard'].forEach(id => {
-            document.getElementById(id).addEventListener('input', recalcCollection);
-          });
-          recalcCollection()
-        });
-
-        // UNCHANGED: Remove row and collect data
-        function removeProductRow(button) {
-          button.closest('.product-group').remove();
-        }
-        //ADD Borrow button
-        function addBorrowerRow() {
-          const container = document.getElementById("borrowers");
-          const div = document.createElement("div");
-          div.className = "row g-2 mb-2 borrower-group border rounded p-2 bg-light";
-
-          div.innerHTML = `
-            <div class="col-md-6">
-              <input type="text" class="form-control borrower-name" placeholder="Borrower Name" required>
-            </div>
-            <div class="col-md-4">
-              <input type="number" step="any" class="form-control borrower-amount" placeholder="Borrowed Amount" required>
-            </div>
-            <div class="col-md-2 d-flex justify-content-end align-items-start">
-              <button type="button" class="btn btn-danger" onclick="this.closest('.borrower-group').remove()">Remove</button>
-            </div>
-          `;
-
-
-          container.appendChild(div);
-        }
-
-      function collectProducts() {
+    function collectProducts() {
       const groups = document.querySelectorAll(".product-group");
       const products = [];
 
@@ -172,7 +169,6 @@ subInput.addEventListener("change", updateOpeningAndPrice);
         const fields = group.querySelectorAll("select, input");
         const opening = parseFloat(fields[2].value || 0);
         const closing = parseFloat(fields[3].value || 0);
-
         if (closing < opening) {
           alert("Closing value must be greater than or equal to Opening value.");
           throw new Error("Invalid closing value");
@@ -191,136 +187,91 @@ subInput.addEventListener("change", updateOpeningAndPrice);
       return products;
     }
 
+    function submitAll(event) {
+      event.preventDefault();
+      const date = document.getElementById("entryDate").value;
+      const employeeId = parseInt(document.getElementById("employeeDropdown").value);
 
-        // CHANGED: Use shared date and employee ID fields
-        function submitSales(event) {
-          event.preventDefault();
-          const data = {
-            date: document.getElementById("entryDate").value,
-            employeeId: parseInt(document.getElementById("employeeDropdown").value),
-            products: collectProducts()
-          };
+      const salesData = {
+        date: date,
+        employeeId: employeeId,
+        products: collectProducts()
+      };
 
-          fetch('/sales', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-          })
-            .then(res => res.text())
-            .then(msg => alert("Sales Saved: " + msg))
-            .catch(err => alert("Error: " + err));
-        }
+      const collectionData = {
+        date: date,
+        employeeId: employeeId,
+        cashReceived: parseFloat(document.getElementById("cashReceived").value || 0),
+        phonePay: parseFloat(document.getElementById("phonePay").value || 0),
+        creditCard: parseFloat(document.getElementById("creditCard").value || 0),
+        shortCollections: parseFloat(document.getElementById("shortCollections").value || 0),
+        borrowers: []
+      };
 
-        // CHANGED: Use shared fields and renamed badHandling
-        function submitCollections(event) {
-          event.preventDefault();
+      const borrowerGroups = document.querySelectorAll('.borrower-group');
+      borrowerGroups.forEach(group => {
+        const name = group.querySelector('.borrower-name').value;
+        const amount = parseFloat(group.querySelector('.borrower-amount').value || 0);
+        collectionData.borrowers.push({ name, amount });
+      });
 
-          const data = {
-            date: document.getElementById("entryDate").value,
-            employeeId: parseInt(document.getElementById("employeeDropdown").value),
-            cashReceived: parseFloat(document.getElementById("cashReceived").value || 0),
-            phonePay: parseFloat(document.getElementById("phonePay").value || 0),
-            creditCard: parseFloat(document.getElementById("creditCard").value || 0),
-            shortCollections: parseFloat(document.getElementById("shortCollections").value || 0),
-            borrowers: []
-          };
-
-          const borrowerGroups = document.querySelectorAll('.borrower-group');
-          borrowerGroups.forEach(group => {
-            const name = group.querySelector('.borrower-name').value;
-            const amount = parseFloat(group.querySelector('.borrower-amount').value || 0);
-            data.borrowers.push({ name, amount }); // no need to include date/time
-          });
-
-          fetch('/collections', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-          })
-            .then(res => res.text())
-            .then(msg => {alert("Collections Saved: " + msg);
-        location.reload(); // 🔄 This is the added line
+      fetch('/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(salesData)
       })
-      .catch(err => alert("Error: " + err));
-      }
-
-        window.onload = () => addProductRow();
-    </script>
-    <script>
-        // CHANGED: Bind flatpickr to shared date
-        document.addEventListener("DOMContentLoaded", function () {
-          flatpickr("#entryDate", {
-            enableTime: true,
-            dateFormat: "Y-m-d H:i:S",
-            altInput: true,
-            altFormat: "F j, Y h:i K",
-            defaultDate: new Date()
+        .then(res => res.text())
+        .then(msg => {
+          console.log("Sales Saved:", msg);
+          return fetch('/collections', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(collectionData)
           });
-
-          // CHANGED: Use shared dropdown
-          fetch("/active")
-            .then(response => response.json())
-            .then(data => {
-              const sharedDropdown = document.getElementById("employeeDropdown");
-              sharedDropdown.innerHTML = '<option value="">Select Employee ID and Name</option>';
-              data.forEach(emp => {
-                const option = document.createElement("option");
-                option.value = emp.employeeId;
-                option.text = emp.employeeId + ' - ' + emp.employeeFirstName + ' ' + emp.employeeLastName;
-                sharedDropdown.appendChild(option);
-              });
-            })
-            .catch(error => {
-              console.error('Error fetching employees:', error);
-              alert('Failed to load employee data for entry form.');
-            });
+        })
+        .then(res => res.text())
+        .then(msg => {
+          alert("All Data Saved Successfully.\nCollections: " + msg);
+          location.reload();
+        })
+        .catch(err => {
+          console.error("Error during submission:", err);
+          alert("Submission Failed: " + err);
         });
-    </script>
-</head>
-<body class="bg-body-tertiary">
-<div class="container py-4">
-    <h2 class="mb-4">Sales & Collections Dashboard</h2>
+    }
 
-    <!-- CHANGED: Shared Date and Employee Fields -->
-    <div class="row g-3 mb-3">
-        <div class="col-md-6">
-            <input type="text" class="form-control" id="entryDate" placeholder="Date" required>
-        </div>
-        <div class="col-md-6">
-            <select name="employeeId" class="form-control" id="employeeDropdown" required>
-                <option value="">Select Employee ID and Name</option>
-            </select>
-        </div>
-    </div>
+    window.onload = () => {
+      addProductRow();
+      flatpickr("#entryDate", {
+        enableTime: true,
+        dateFormat: "Y-m-d H:i:S",
+        altInput: true,
+        altFormat: "F j, Y h:i K",
+        defaultDate: new Date()
+      });
 
-    <!-- UNCHANGED: Sales Form -->
-    <form onsubmit="submitSales(event)" class="mb-5 border p-4 rounded bg-white shadow-sm">
-        <h4>Sales Entry</h4>
-        <div id="products"></div>
-        <button type="button" class="btn btn-outline-primary mt-2" onclick="addProductRow()">Add Product</button>
-        <button type="submit" class="btn btn-success mt-2 float-end">Submit Sales</button>
-    </form>
+      fetch("/active")
+        .then(response => response.json())
+        .then(data => {
+          const dropdown = document.getElementById("employeeDropdown");
+          dropdown.innerHTML = '<option value="">Select Employee ID and Name</option>';
+          data.forEach(emp => {
+            const option = document.createElement("option");
+            option.value = emp.employeeId;
+            option.text = emp.employeeId + ' - ' + emp.employeeFirstName + ' ' + emp.employeeLastName;
+            dropdown.appendChild(option);
+          });
+        })
+        .catch(error => {
+          console.error('Error fetching employees:', error);
+          alert('Failed to load employee data for entry form.');
+        });
 
-    <!-- CHANGED: Cleaned-up Collections Form -->
-    <form onsubmit="submitCollections(event)" class="border p-4 rounded bg-white shadow-sm">
-        <h4>Collections Entry</h4>
-        <div class="row g-3 mb-3">
-            <div class="col-md-6"><input type="number" step="any" class="form-control" id="cashReceived"
-                                         placeholder="Cash Received"></div>
-            <div class="col-md-6"><input type="number" step="any" class="form-control" id="phonePay"
-                                         placeholder="Phone Pay"></div>
-            <div class="col-md-6"><input type="number" step="any" class="form-control" id="creditCard"
-                                         placeholder="Credit Card"></div>
-            <div class="col-md-6"><input type="number" step="any" class="form-control" id="shortCollections"
-                                         placeholder="Short Collections" readonly></div>
-            <div class="col-md-6"><input type="number" step="any" class="form-control" id="totalCollection"
-                                         placeholder="Total Collection" readonly></div>
-
-        </div>
-        <div id="borrowers"></div>
-        <button type="button" class="btn btn-outline-secondary mb-3" onclick="addBorrowerRow()">Add Borrow</button>
-        <button type="submit" class="btn btn-success float-end">Submit Collections</button>
-    </form>
-</div>
+      ['cashReceived','phonePay','creditCard'].forEach(id => {
+        document.getElementById(id).addEventListener('input', recalcCollection);
+      });
+      recalcCollection();
+    };
+</script>
 </body>
 </html>

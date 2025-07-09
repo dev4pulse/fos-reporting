@@ -1,21 +1,20 @@
 package com.fos.reporting.domain;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.Data;
 
 import java.util.List;
 
 @Data
-@Builder
-public class CollectionsDto {
-    @NotNull
+public class EntryDto {
     private String date;
-    @NotNull
     private int employeeId;
+
+    // sales
+    private List<Product> products;
+
+    // collections
     private float cashReceived;
     private float phonePay;
     private float creditCard;
-    private float borrowedAmount;
-    private float shortCollections;
     private List<BorrowerDto> borrowers;
 }

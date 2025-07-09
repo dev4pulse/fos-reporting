@@ -19,7 +19,6 @@ public class ReportController {
     @Autowired
     private SalesRepository salesRepository;
 
-    // === Unchanged: simple health-check endpoint ===
     @GetMapping("/test")
     public ResponseEntity<String> ping() {
         try {
@@ -44,21 +43,24 @@ public class ReportController {
         }
     }
 
-    // === New: fetch prior closing-stock for a given product & gun ===
     @GetMapping("/sales/last")
-    public ResponseEntity<Map<String, Float>> getLastClosing(
-            @RequestParam String productName,
-            @RequestParam String gun
-    ) {
-        float last = reportService.getLastClosing(productName, gun);
-        return ResponseEntity.ok(Map.of("lastClosing", last));
+    public ResponseEntity<?> getLastClosing(@RequestParam String productName, @RequestParam String gun) {
+        try {
+            float last = reportService.getLastClosing(productName, gun);
+            return ResponseEntity.ok(Map.of("lastClosing", last));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Something went wrong"));
+        }
     }
 
     @PostMapping("/collections")
     public ResponseEntity<String> addCollections(@RequestBody @Validated CollectionsDto collectionsDto) {
         try {
             System.out.println("➡️ Received Collections DTO: " + collectionsDto); // ✅ Log full DTO
-
             if (reportService.addToCollections(collectionsDto)) {
                 return new ResponseEntity<>("added to collections", HttpStatus.OK);
             }
@@ -69,7 +71,6 @@ public class ReportController {
             return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
     @PostMapping("/dashboard-data")
     public ResponseEntity<GetReportResponse> getDashboardData(@RequestBody @Validated GetReportRequest getReportRequest) {
@@ -82,10 +83,7 @@ public class ReportController {
     }
 
     @GetMapping("/sales/price")
-    public ResponseEntity<Float> getProductPrice(
-            @RequestParam String productName,
-            @RequestParam String gun
-    ) {
+    public ResponseEntity<Float> getProductPrice(@RequestParam String productName, @RequestParam String gun) {
         Sales last = salesRepository.findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
         if (last != null) {
             return ResponseEntity.ok(last.getPrice());
@@ -93,6 +91,4 @@ public class ReportController {
             return ResponseEntity.ok(0f); // or return 404 if preferred
         }
     }
-
 }
-

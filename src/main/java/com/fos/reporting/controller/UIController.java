@@ -5,24 +5,23 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
 public class UIController {
-
-
     @GetMapping("/sales-form")
     public String showSalesForm() {
-        return "sales-form";  // refers to templates/sales-form.html
+        return "sales-form";
     }
+
     @GetMapping("/entry")
     public String addEntry() {
-        return "entry"; // loads entry-form.html
+        return "entry";
     }
+
     @GetMapping("/dashboard")
     public String showDashboard() {
-        return "dashboard"; // loads dashboard-form.html
+        return "dashboard";
     }
 
     @GetMapping("/collections-form")
     public String showCollectionsForm() {
-        return "collections-form"; // maps to collections-form.html
+        return "collections-form";
     }
-
 }
