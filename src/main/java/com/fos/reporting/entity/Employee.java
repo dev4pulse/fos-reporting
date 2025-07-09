@@ -10,11 +10,6 @@ import lombok.*;
 @Entity
 @Table(name = "Employee")
 @Data
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 public class Employee {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

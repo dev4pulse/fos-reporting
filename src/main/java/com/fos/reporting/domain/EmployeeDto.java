@@ -1,16 +1,10 @@
 package com.fos.reporting.domain;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
 @Data
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
 public class EmployeeDto {
     private Long employeeId;
     private String employeeFirstName;
@@ -26,4 +20,3 @@ public class EmployeeDto {
     private String username;
     private String password;
 }
-

@@ -19,7 +19,7 @@ import java.util.List;
 @Service
 public class ReportService {
 
-    public static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Autowired
     private SalesRepository salesRepository;
@@ -30,23 +30,18 @@ public class ReportService {
     @Autowired
     private BorrowerRepository borrowerRepository;
 
-    /**
-     * Fetch last closing stock for a given product and sub-product.
-     */
     public Float getLastClosing(String productName, String gun) {
-        Sales last = salesRepository
-                .findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
+        Sales last = salesRepository.findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
         return (last != null) ? last.getClosingStock() : 0f;
     }
 
-    /**
-     * Save sales data from entry.
-     */
     public boolean addToSales(EntryProduct entryProduct) {
         try {
-            entryProduct.getProducts().forEach(product -> {
+            LocalDateTime entryDateTime = LocalDateTime.parse(entryProduct.getDate(), FORMATTER);
+
+            for (Product product : entryProduct.getProducts()) {
                 Sales sales = new Sales();
-                sales.setDateTime(LocalDateTime.parse(entryProduct.getDate(), formatter));
+                sales.setDateTime(entryDateTime);
                 sales.setProductName(product.getProductName());
                 sales.setGun(product.getGun());
                 sales.setEmployeeId(entryProduct.getEmployeeId());
@@ -56,20 +51,23 @@ public class ReportService {
                     opening = getLastClosing(product.getProductName(), product.getGun());
                 }
 
-                sales.setOpeningStock(opening);
-                sales.setClosingStock(product.getClosing());
-                sales.setTestingTotal(product.getTesting());
+                float closing = product.getClosing();
+                float testing = product.getTesting();
 
-                BigDecimal saleVolume = BigDecimal.valueOf(product.getClosing() - opening - product.getTesting());
+                sales.setOpeningStock(opening);
+                sales.setClosingStock(closing);
+                sales.setTestingTotal(testing);
+
+                BigDecimal saleVolume = BigDecimal.valueOf(closing - opening - testing);
                 sales.setSalesInLiters(saleVolume);
 
+                BigDecimal price = BigDecimal.valueOf(product.getPrice());
                 sales.setPrice(product.getPrice());
-                // ★ Updated: calculate saleAmount based on BigDecimal
-                BigDecimal saleAmt = saleVolume.multiply(BigDecimal.valueOf(product.getPrice()));
-                sales.setSalesInRupees(saleAmt.floatValue());
+                sales.setSalesInRupees(saleVolume.multiply(price).floatValue());
 
                 salesRepository.save(sales);
-            });
+            }
+
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -77,96 +75,92 @@ public class ReportService {
         }
     }
 
-    /**
-     * Save collections and borrowers.
-     */
-    public boolean addToCollections(CollectionsDto collectionsDto) {
+    public boolean addToCollections(CollectionsDto dto) {
         try {
-            // 1. Map and save Collections entity
-            Collections collections = mapToCollections(collectionsDto);
-            LocalDateTime requestedTime = LocalDateTime.parse(collectionsDto.getDate(), formatter);
-            collections.setEmployeeId(collectionsDto.getEmployeeId());
+            LocalDateTime dateTime = LocalDateTime.parse(dto.getDate(), FORMATTER);
 
-            List<Sales> salesByTime = salesRepository.findByDateTime(requestedTime);
+            Collections collections = mapToCollections(dto);
+            collections.setDateTime(dateTime);
+            collections.setEmployeeId(dto.getEmployeeId());
 
-            double expectedTotal = salesByTime.stream().map(Sales::getSalesInRupees)
-                    .mapToDouble(Float::doubleValue).sum();
+            List<Sales> salesByTime = salesRepository.findByDateTime(dateTime);
 
-            double receivedTotal = collectionsDto.getCashReceived() +
-                    collectionsDto.getPhonePay() +
-                    collectionsDto.getCreditCard() +
-                    collectionsDto.getBorrowedAmount();
+            double expected = salesByTime.stream()
+                    .map(Sales::getSalesInRupees)
+                    .mapToDouble(Float::doubleValue)
+                    .sum();
 
+            double received = dto.getCashReceived() + dto.getPhonePay() + dto.getCreditCard() + dto.getBorrowedAmount();
 
-            collections.setExpectedTotal(expectedTotal);
-            collections.setReceivedTotal(receivedTotal);
-            collections.setDifference(expectedTotal - receivedTotal);
+            collections.setExpectedTotal(expected);
+            collections.setReceivedTotal(received);
+            collections.setDifference(expected - received);
 
-            Collections savedCollection = collectionsRepository.save(collections);
+            Collections saved = collectionsRepository.save(collections);
 
-            // 2. Save borrowers (if any)
-            if (collectionsDto.getBorrowers() != null) {
-                for (BorrowerDto b : collectionsDto.getBorrowers()) {
+            if (dto.getBorrowers() != null) {
+                for (BorrowerDto b : dto.getBorrowers()) {
                     Borrower borrower = new Borrower();
                     borrower.setName(b.getName());
                     borrower.setAmount(b.getAmount());
                     borrower.setBorrowedAt(LocalDateTime.now());
-                    borrower.setCollection(savedCollection);
+                    borrower.setCollection(saved);
                     borrowerRepository.save(borrower);
                 }
             }
 
-            return savedCollection.getId() > 0;
+            return saved.getId() > 0;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    private Collections mapToCollections(CollectionsDto collectionsDto) {
+    private Collections mapToCollections(CollectionsDto dto) {
         Collections collections = new Collections();
-        BeanUtils.copyProperties(collectionsDto, collections);
-        collections.setDateTime(LocalDateTime.parse(collectionsDto.getDate(), formatter));
+        BeanUtils.copyProperties(dto, collections);
+        collections.setDateTime(LocalDateTime.parse(dto.getDate(), FORMATTER));
         return collections;
     }
 
-    /**
-     * Dashboard logic to generate report summary.
-     */
     public GetReportResponse getDashboard(GetReportRequest req) {
-        GetReportResponse getReportResponse = new GetReportResponse();
-        LocalDateTime fromDate = LocalDateTime.parse(req.getFromDate(), formatter);
-        LocalDateTime toDate = LocalDateTime.parse(req.getToDate(), formatter);
+        LocalDateTime from = LocalDateTime.parse(req.getFromDate(), FORMATTER);
+        LocalDateTime to = LocalDateTime.parse(req.getToDate(), FORMATTER);
 
-        List<Collections> collections = collectionsRepository.findByDateTimeBetween(fromDate, toDate);
-        List<Sales> sales = salesRepository.findByDateTimeBetween(fromDate, toDate);
+        List<Collections> collections = collectionsRepository.findByDateTimeBetween(from, to);
+        List<Sales> sales = salesRepository.findByDateTimeBetween(from, to);
 
-        float petrol = (float) getSalesByProductName(sales, "petrol");
-        float diesel = (float) getSalesByProductName(sales, "diesel");
-        float petrolCollections = (float) getCollections(sales, "petrol");
-        float dieselCollections = (float) getCollections(sales, "diesel");
+        double petrolLiters = getSalesVolume(sales, "petrol");
+        double dieselLiters = getSalesVolume(sales, "diesel");
 
-        float actualCollections = (float) collections.stream()
-                .map(Collections::getReceivedTotal)
-                .mapToDouble(x -> x).sum();
+        double petrolExpected = getSalesAmount(sales, "petrol");
+        double dieselExpected = getSalesAmount(sales, "diesel");
 
-        getReportResponse.setActualCollection(actualCollections);
-        getReportResponse.setDifference(petrolCollections + dieselCollections - actualCollections);
-        getReportResponse.setPetrol(ReportData.builder().saleInLtr(petrol).expectedCollections(petrolCollections).build());
-        getReportResponse.setDiesel(ReportData.builder().saleInLtr(diesel).expectedCollections(dieselCollections).build());
+        double totalReceived = collections.stream()
+                .mapToDouble(Collections::getReceivedTotal)
+                .sum();
 
-        return getReportResponse;
+        GetReportResponse response = new GetReportResponse();
+        response.setActualCollection((float) totalReceived);
+        response.setDifference((float) (petrolExpected + dieselExpected - totalReceived));
+        response.setPetrol(ReportData.builder().saleInLtr((float) petrolLiters).expectedCollections((float) petrolExpected).build());
+        response.setDiesel(ReportData.builder().saleInLtr((float) dieselLiters).expectedCollections((float) dieselExpected).build());
+
+        return response;
     }
 
-    private static double getSalesByProductName(List<Sales> sales, String productName) {
+    private static double getSalesVolume(List<Sales> sales, String productName) {
         return sales.stream()
-                .filter(x -> productName.equalsIgnoreCase(x.getProductName())).map(Sales::getSalesInLiters)
-                .mapToDouble(BigDecimal::doubleValue).sum();
+                .filter(s -> productName.equalsIgnoreCase(s.getProductName()))
+                .map(Sales::getSalesInLiters)
+                .mapToDouble(BigDecimal::doubleValue)
+                .sum();
     }
 
-    private static double getCollections(List<Sales> sales, String productName) {
+    private static double getSalesAmount(List<Sales> sales, String productName) {
         return sales.stream()
-                .filter(x -> productName.equalsIgnoreCase(x.getProductName())).map(Sales::getSalesInRupees)
-                .mapToDouble(x -> x).sum();
+                .filter(s -> productName.equalsIgnoreCase(s.getProductName()))
+                .mapToDouble(Sales::getSalesInRupees)
+                .sum();
     }
 }

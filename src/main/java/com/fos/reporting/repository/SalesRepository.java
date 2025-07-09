@@ -8,10 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface SalesRepository extends JpaRepository<Sales, Long> {
-
     Sales findTopByProductNameAndGunOrderByDateTimeDesc(@NotNull String productName, String gun);
-
     List<Sales> findByDateTime(@NotNull LocalDateTime datetime);
-
     List<Sales> findByDateTimeBetween(@NotNull LocalDateTime fromDate, @NotNull LocalDateTime toDate);
 }

@@ -4,10 +4,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Data
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
 public class Product {
     @NotNull
     private String productName;
