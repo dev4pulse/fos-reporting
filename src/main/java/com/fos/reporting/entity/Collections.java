@@ -25,7 +25,6 @@ public class Collections {
     private float phonePay;
     private float creditCard;
     private float borrowedAmount;
-    private float debtRecovered;
     private String borrower;
 
     // ✅ Updated field mapping for renamed DB column
@@ -36,4 +35,3 @@ public class Collections {
     private double receivedTotal;
     private double difference;
 }
-

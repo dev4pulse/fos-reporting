@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface SalesRepository extends JpaRepository<Sales, Long> {
 
-    Sales findTopByProductNameAndSubProductOrderByDateTimeDesc(@NotNull String productName, String subProduct);
+    Sales findTopByProductNameAndGunOrderByDateTimeDesc(@NotNull String productName, String gun);
 
     List<Sales> findByDateTime(@NotNull LocalDateTime datetime);
 

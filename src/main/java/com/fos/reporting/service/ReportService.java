@@ -11,6 +11,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -32,9 +33,9 @@ public class ReportService {
     /**
      * Fetch last closing stock for a given product and sub-product.
      */
-    public Float getLastClosing(String productName, String subProduct) {
+    public Float getLastClosing(String productName, String gun) {
         Sales last = salesRepository
-            .findTopByProductNameAndSubProductOrderByDateTimeDesc(productName, subProduct);
+                .findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
         return (last != null) ? last.getClosingStock() : 0f;
     }
 
@@ -47,22 +48,25 @@ public class ReportService {
                 Sales sales = new Sales();
                 sales.setDateTime(LocalDateTime.parse(entryProduct.getDate(), formatter));
                 sales.setProductName(product.getProductName());
-                sales.setSubProduct(product.getSubProduct());
+                sales.setGun(product.getGun());
                 sales.setEmployeeId(entryProduct.getEmployeeId());
 
                 float opening = product.getOpening();
                 if (opening == 0f) {
-                    opening = getLastClosing(product.getProductName(), product.getSubProduct());
+                    opening = getLastClosing(product.getProductName(), product.getGun());
                 }
 
                 sales.setOpeningStock(opening);
                 sales.setClosingStock(product.getClosing());
                 sales.setTestingTotal(product.getTesting());
 
-                float sale = product.getClosing() - opening - product.getTesting();
-                sales.setSale(sale);
+                BigDecimal saleVolume = BigDecimal.valueOf(product.getClosing() - opening - product.getTesting());
+                sales.setSalesInLiters(saleVolume);
+
                 sales.setPrice(product.getPrice());
-                sales.setSaleAmount(sale * product.getPrice());
+                // ★ Updated: calculate saleAmount based on BigDecimal
+                BigDecimal saleAmt = saleVolume.multiply(BigDecimal.valueOf(product.getPrice()));
+                sales.setSalesInRupees(saleAmt.floatValue());
 
                 salesRepository.save(sales);
             });
@@ -85,14 +89,13 @@ public class ReportService {
 
             List<Sales> salesByTime = salesRepository.findByDateTime(requestedTime);
 
-            double expectedTotal = salesByTime.stream().map(Sales::getSaleAmount)
+            double expectedTotal = salesByTime.stream().map(Sales::getSalesInRupees)
                     .mapToDouble(Float::doubleValue).sum();
 
             double receivedTotal = collectionsDto.getCashReceived() +
                     collectionsDto.getPhonePay() +
                     collectionsDto.getCreditCard() +
-                    collectionsDto.getBorrowedAmount() +
-                    collectionsDto.getDebtRecovered();
+                    collectionsDto.getBorrowedAmount();
 
 
             collections.setExpectedTotal(expectedTotal);
@@ -157,14 +160,13 @@ public class ReportService {
 
     private static double getSalesByProductName(List<Sales> sales, String productName) {
         return sales.stream()
-                .filter(x -> productName.equalsIgnoreCase(x.getProductName())).map(Sales::getSale)
-                .mapToDouble(x -> x).sum();
+                .filter(x -> productName.equalsIgnoreCase(x.getProductName())).map(Sales::getSalesInLiters)
+                .mapToDouble(BigDecimal::doubleValue).sum();
     }
 
     private static double getCollections(List<Sales> sales, String productName) {
         return sales.stream()
-                .filter(x -> productName.equalsIgnoreCase(x.getProductName())).map(Sales::getSaleAmount)
+                .filter(x -> productName.equalsIgnoreCase(x.getProductName())).map(Sales::getSalesInRupees)
                 .mapToDouble(x -> x).sum();
     }
 }
-

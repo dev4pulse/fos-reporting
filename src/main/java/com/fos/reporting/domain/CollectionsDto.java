@@ -19,10 +19,9 @@ public class CollectionsDto {
     private float phonePay;
     private float creditCard;
     private float borrowedAmount;
-    private float debtRecovered;
+
     private float shortCollections;
 
     // ✅ NEW: List of borrowers instead of single string
     private List<BorrowerDto> borrowers;
 }
-
