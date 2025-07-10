@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Entity
-@Table(name = "Employee")
+@Table(name = "employee")
 @Data
 public class Employee {
     @Id

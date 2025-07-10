@@ -4,15 +4,11 @@ import lombok.Data;
 
 import java.util.List;
 
-@Data
+@Data // combination of sales and collections
 public class EntryDto {
     private String date;
     private int employeeId;
-
-    // sales
     private List<Product> products;
-
-    // collections
     private float cashReceived;
     private float phonePay;
     private float creditCard;

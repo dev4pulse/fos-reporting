@@ -9,13 +9,14 @@ import java.util.List;
 @Builder
 public class CollectionsDto {
     @NotNull
-    private String date;
+    private String date; // Expecting format: yyyy-MM-dd HH:mm:ss
     @NotNull
-    private int employeeId;
+    private Integer employeeId;
     private float cashReceived;
     private float phonePay;
     private float creditCard;
     private float borrowedAmount;
     private float shortCollections;
+
     private List<BorrowerDto> borrowers;
 }

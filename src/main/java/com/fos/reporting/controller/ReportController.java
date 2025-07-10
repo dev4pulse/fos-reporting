@@ -1,12 +1,12 @@
 package com.fos.reporting.controller;
 
-import com.fos.reporting.domain.*;           // wildcard import for CollectionsDto, EntryProduct, etc.
+import com.fos.reporting.domain.*;
 import com.fos.reporting.entity.Sales;
 import com.fos.reporting.repository.SalesRepository;
 import com.fos.reporting.service.ReportService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -21,25 +21,18 @@ public class ReportController {
 
     @GetMapping("/test")
     public ResponseEntity<String> ping() {
-        try {
-            System.out.println("report service call");
-            return new ResponseEntity<>("test from report service", HttpStatus.OK);
-        } catch (Exception e) {
-            System.out.println("e" + e);
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return ResponseEntity.ok("test from report service");
     }
 
     @PostMapping("/sales")
-    public ResponseEntity<String> addEntry(@RequestBody @Validated EntryProduct entryProduct) {
+    public ResponseEntity<String> addEntry(@RequestBody @Valid EntryProduct entryProduct) {
         try {
             if (reportService.addToSales(entryProduct)) {
-                return new ResponseEntity<>("added to sales", HttpStatus.OK);
+                return ResponseEntity.ok("added to sales");
             }
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
         } catch (Exception e) {
-            System.out.println("e" + e);
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
         }
     }
 
@@ -49,46 +42,36 @@ public class ReportController {
             float last = reportService.getLastClosing(productName, gun);
             return ResponseEntity.ok(Map.of("lastClosing", last));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Something went wrong"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Something went wrong"));
         }
     }
 
     @PostMapping("/collections")
-    public ResponseEntity<String> addCollections(@RequestBody @Validated CollectionsDto collectionsDto) {
+    public ResponseEntity<String> addCollections(@RequestBody @Valid CollectionsDto collectionsDto) {
         try {
-            System.out.println("➡️ Received Collections DTO: " + collectionsDto); // ✅ Log full DTO
             if (reportService.addToCollections(collectionsDto)) {
-                return new ResponseEntity<>("added to collections", HttpStatus.OK);
+                return ResponseEntity.ok("added to collections");
             }
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
         } catch (Exception e) {
-            System.out.println("❌ Exception in /collections:");
-            e.printStackTrace();  // ✅ Print exact error
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
         }
     }
 
     @PostMapping("/dashboard-data")
-    public ResponseEntity<GetReportResponse> getDashboardData(@RequestBody @Validated GetReportRequest getReportRequest) {
+    public ResponseEntity<GetReportResponse> getDashboardData(@RequestBody @Valid GetReportRequest getReportRequest) {
         try {
-            return new ResponseEntity<>(reportService.getDashboard(getReportRequest), HttpStatus.OK);
+            return ResponseEntity.ok(reportService.getDashboard(getReportRequest));
         } catch (Exception e) {
-            System.out.println("e" + e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @GetMapping("/sales/price")
     public ResponseEntity<Float> getProductPrice(@RequestParam String productName, @RequestParam String gun) {
         Sales last = salesRepository.findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
-        if (last != null) {
-            return ResponseEntity.ok(last.getPrice());
-        } else {
-            return ResponseEntity.ok(0f); // or return 404 if preferred
-        }
+        return ResponseEntity.ok((last != null) ? last.getPrice() : 0f);
     }
 }

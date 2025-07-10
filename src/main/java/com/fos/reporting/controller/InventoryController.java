@@ -2,10 +2,10 @@ package com.fos.reporting.controller;
 
 import com.fos.reporting.domain.InventoryDto;
 import com.fos.reporting.service.InventoryService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,15 +16,14 @@ public class InventoryController {
     private InventoryService inventoryService;
 
     @PostMapping("/inventory")
-    public ResponseEntity<String> addEntry(@RequestBody @Validated InventoryDto inventoryDto ) {
+    public ResponseEntity<String> addEntry(@RequestBody @Valid InventoryDto inventoryDto) {
         try {
             if (inventoryService.addToInventory(inventoryDto)) {
-                return new ResponseEntity<>("added to inventory", HttpStatus.OK);
+                return ResponseEntity.ok("added to inventory");
             }
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
         } catch (Exception e) {
-            System.out.println("e" + e);
-            return new ResponseEntity<>("failed exception", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
         }
     }
 }

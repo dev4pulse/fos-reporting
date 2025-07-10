@@ -5,11 +5,10 @@ import lombok.*;
 
 import java.util.List;
 
-@Data
+@Data // EntryProduct DTO (used for sales submission)
 public class EntryProduct {
+    private String date; // Expecting format: yyyy-MM-dd HH:mm:ss
     @NotNull
-    private String date;
+    private Integer employeeId;
     private List<Product> products;
-    @NotNull
-    private int employeeId;
 }

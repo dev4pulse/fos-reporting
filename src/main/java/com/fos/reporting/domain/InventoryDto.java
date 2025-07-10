@@ -14,5 +14,5 @@ public class InventoryDto {
     @NotNull
     private LocalDateTime lastUpdated;
     @NotNull
-    private int employeeId;
+    private Integer employeeId;
 }

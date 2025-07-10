@@ -12,13 +12,12 @@ import java.time.LocalDateTime;
 @Data
 public class Sales {
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NotNull
     private LocalDateTime dateTime;
     @NotNull
     private String productName;
-    @Column(name = "gun")
     private String gun;
     @NotNull
     private int employeeId;
