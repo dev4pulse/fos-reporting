@@ -14,6 +14,10 @@ public class UIController {
     public String addEntry() {
         return "entry";
     }
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
 
     @GetMapping("/dashboard")
     public String showDashboard() {
