@@ -37,7 +37,7 @@ public class EmployeeController {
     }
 
     // Login
-    @GetMapping("/login")
+    @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDto loginRequest, HttpSession session) {
         Optional<Employee> emp = employeeService.login(loginRequest.getUsername(), loginRequest.getPassword());
         if (emp.isPresent()) {
