@@ -36,6 +36,8 @@ public class EmployeeController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDto loginRequest, HttpSession session) {
+        System.out.println("request received" );
+
         Optional<Employee> emp = employeeService.login(loginRequest.getUsername(), loginRequest.getPassword());
         return emp.map(employee -> {session.setAttribute("employeeId", employee.getEmployeeId());
             return ResponseEntity.ok(Map.of("status", "success", "employeeId", employee.getEmployeeId()));
