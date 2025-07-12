@@ -1,4 +1,4 @@
-package com.fos.reporting.loggingfilter;
+package com.fos.reporting.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,6 +15,6 @@ public class LoggingFilter extends CommonsRequestLoggingFilter {
             throws ServletException, IOException {
         System.out.println("request received :" + request.getRequestURI());
         super.doFilterInternal(request, response, filterChain);
-  }
+    }
 
 }
