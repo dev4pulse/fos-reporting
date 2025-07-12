@@ -12,7 +12,7 @@ import lombok.*;
 @Data
 public class Employee {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private long employeeId;
     @NotNull
     private String employeeFirstName;

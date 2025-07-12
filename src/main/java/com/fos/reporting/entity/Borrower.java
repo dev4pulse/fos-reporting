@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Data
 public class Borrower {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String name;
     private float amount;

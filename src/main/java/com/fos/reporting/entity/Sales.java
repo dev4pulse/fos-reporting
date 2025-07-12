@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Data
 public class Sales {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     @NotNull
     private LocalDateTime dateTime;
