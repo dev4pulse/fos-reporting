@@ -29,4 +29,6 @@ public class Inventory {
     private LocalDateTime lastUpdated;
     @NotNull
     private Long employeeId;
+    @NotNull
+    private float price;
 }

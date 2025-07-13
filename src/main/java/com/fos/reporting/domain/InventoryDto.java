@@ -7,12 +7,12 @@ import java.time.LocalDateTime;
 
 @Data
 public class InventoryDto {
-    @NotNull
+    private int productID;
     private String productName;
-    @NotNull
     private float quantity;
-    @NotNull
-    private LocalDateTime lastUpdated;
-    @NotNull
-    private Integer employeeId;
+    private int tankCapacity;
+    private float currentLevel;
+    private float bookingLimit;
+    private Long employeeId;
+    private float price;
 }
