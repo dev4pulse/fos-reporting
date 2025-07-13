@@ -1,7 +1,7 @@
 package com.fos.reporting.controller;
 
 import com.fos.reporting.domain.InventoryDto;
-import com.fos.reporting.entity.Inventory;
+import com.fos.reporting.domain.UpdatePriceDto;
 import com.fos.reporting.repository.InventoryRepository;
 import com.fos.reporting.service.InventoryService;
 import jakarta.validation.Valid;
@@ -9,8 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 @RestController
 public class InventoryController {
@@ -42,6 +40,16 @@ public class InventoryController {
                 .findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(productName)
                 .map(inventory -> ResponseEntity.ok(inventory.getPrice()))
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/inventory/update-price")
+    public ResponseEntity<String> updateProductPrice(@RequestBody @Valid UpdatePriceDto dto) {
+        boolean updated = inventoryService.updatePrice(dto.getProductName(), dto.getNewPrice());
+        if (updated) {
+            return ResponseEntity.ok("Price updated successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found in inventory");
+        }
     }
 
 }

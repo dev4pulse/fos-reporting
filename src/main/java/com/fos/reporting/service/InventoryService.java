@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class InventoryService {
@@ -18,7 +19,7 @@ public class InventoryService {
 
     public boolean addToInventory(InventoryDto dto) {
         Inventory inventory = new Inventory();
-        inventory.setProductName(dto.getProductName());
+        inventory.setProductName(dto.getProductName().trim().toLowerCase());
         inventory.setProductID(dto.getProductID());
         inventory.setQuantity(dto.getQuantity());
         inventory.setTankCapacity(dto.getTankCapacity());
@@ -26,15 +27,11 @@ public class InventoryService {
         inventory.setBookingLimit(dto.getBookingLimit());
         inventory.setEmployeeId(dto.getEmployeeId());
         inventory.setLastUpdated(LocalDateTime.now());
-
-        // Set price explicitly from DTO if provided
         if (dto.getPrice() > 0) {
             inventory.setPrice(dto.getPrice());
         } else {
-            // Otherwise set default price based on product name
             inventory.setPrice(getDefaultPrice(dto.getProductName()));
         }
-
         inventoryRepository.save(inventory);
         return true;
     }
@@ -50,4 +47,23 @@ public class InventoryService {
         }
     }
 
+    public boolean updatePrice(String productName, float newPrice) {
+        Optional<Inventory> latest = inventoryRepository.findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(productName);
+        if (latest.isPresent()) {
+            Inventory updatedEntry = new Inventory();
+            Inventory previous = latest.get();
+            updatedEntry.setProductName(previous.getProductName());
+            updatedEntry.setProductID(previous.getProductID());
+            updatedEntry.setQuantity(previous.getQuantity());
+            updatedEntry.setTankCapacity(previous.getTankCapacity());
+            updatedEntry.setCurrentLevel(previous.getCurrentLevel());
+            updatedEntry.setBookingLimit(previous.getBookingLimit());
+            updatedEntry.setEmployeeId(previous.getEmployeeId());
+            updatedEntry.setLastUpdated(LocalDateTime.now());
+            updatedEntry.setPrice(newPrice);
+            inventoryRepository.save(updatedEntry);
+            return true;
+        }
+        return false;
+    }
 }
