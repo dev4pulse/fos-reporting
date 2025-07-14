@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -48,10 +49,16 @@ public class InventoryController {
     }
 
     //  Inventory Fetch
-    @GetMapping("/inventory")
-    public ResponseEntity<List<Inventory>> getAllInventory() {
-        List<Inventory> inventoryList = inventoryRepository.findAll();
-        return ResponseEntity.ok(inventoryList);
+    @GetMapping("/inventory/latest")
+    public ResponseEntity<List<Inventory>> getLatestInventoryPerProduct() {
+        List<String> distinctNames = inventoryRepository.findDistinctProductNames();
+        List<Inventory> latest = new ArrayList<>();
+        for (String name : distinctNames) {
+            inventoryRepository
+                    .findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(name)
+                    .ifPresent(latest::add);
+        }
+        return ResponseEntity.ok(latest);
     }
 
 
