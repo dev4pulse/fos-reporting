@@ -2,6 +2,7 @@ package com.fos.reporting.controller;
 
 import com.fos.reporting.domain.InventoryDto;
 import com.fos.reporting.domain.UpdatePriceDto;
+import com.fos.reporting.entity.Inventory;
 import com.fos.reporting.repository.InventoryRepository;
 import com.fos.reporting.service.InventoryService;
 import jakarta.validation.Valid;
@@ -9,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 public class InventoryController {
@@ -22,6 +25,7 @@ public class InventoryController {
         this.inventoryRepository = inventoryRepository;
     }
 
+    //  Adding to Inventory
     @PostMapping("/inventory")
     public ResponseEntity<String> addEntry(@RequestBody @Valid InventoryDto inventoryDto) {
         try {
@@ -34,6 +38,7 @@ public class InventoryController {
         }
     }
 
+    //  Latest Price Fetch
     @GetMapping("/inventory/price")
     public ResponseEntity<Float> getPriceFromInventory(@RequestParam String productName) {
         return inventoryRepository
@@ -42,6 +47,15 @@ public class InventoryController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    //  Inventory Fetch
+    @GetMapping("/inventory")
+    public ResponseEntity<List<Inventory>> getAllInventory() {
+        List<Inventory> inventoryList = inventoryRepository.findAll();
+        return ResponseEntity.ok(inventoryList);
+    }
+
+
+    //  Only Price Update
     @PutMapping("/inventory/update-price")
     public ResponseEntity<String> updateProductPrice(@RequestBody @Valid UpdatePriceDto dto) {
         boolean updated = inventoryService.updatePrice(dto.getProductName(), dto.getNewPrice());
