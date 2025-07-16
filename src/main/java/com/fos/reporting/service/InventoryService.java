@@ -45,15 +45,19 @@ public class InventoryService {
 
         // Adjust bookingLimit logic
         float newBookingLimit = dto.getBookingLimit();
-
         if (latestOpt.isPresent()) {
             Inventory latest = latestOpt.get();
-
-            if (incomingQty < latest.getQuantity()) {
-                // petrol decreased => increase booking limit by 10%
+            float prevQty = latest.getQuantity();
+            // Calculate difference
+            float diff = prevQty - incomingQty;
+            if (diff > 0.01) { // quantity reduced
                 newBookingLimit = (float) (latest.getBookingLimit() * 1.10);
+            } else {
+                // If it's a refill, you might want to reset or maintain limit
+                newBookingLimit = latest.getBookingLimit();
             }
         }
+
 
         newInventory.setBookingLimit(newBookingLimit);
 
