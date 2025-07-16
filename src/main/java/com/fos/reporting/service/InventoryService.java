@@ -17,6 +17,14 @@ public class InventoryService {
     @Autowired
     private InventoryRepository inventoryRepository;
 
+    private float getDefaultPrice(String productName) {
+        return switch (productName.toLowerCase()) {
+            case "petrol" -> 104.5f;
+            case "diesel" -> 92.0f;
+            default -> 100.0f;
+        };
+    }
+
     public boolean addToInventory(InventoryDto dto) {
         Inventory inventory = new Inventory();
         inventory.setProductName(dto.getProductName().trim().toLowerCase());
@@ -27,40 +35,35 @@ public class InventoryService {
         inventory.setBookingLimit(dto.getBookingLimit());
         inventory.setEmployeeId(dto.getEmployeeId());
         inventory.setLastUpdated(LocalDateTime.now());
+        if (dto.getMetric() != null && !dto.getMetric().isBlank()) {
+            inventory.setMetric(dto.getMetric().toLowerCase());
+        } else {
+            inventory.setMetric("liters"); // default value
+        }
+
         if (dto.getPrice() > 0) {
             inventory.setPrice(dto.getPrice());
+            inventory.setLastPriceUpdated(LocalDateTime.now()); // track last price update
         } else {
-            inventory.setPrice(getDefaultPrice(dto.getProductName()));
+            float defaultPrice = getDefaultPrice(dto.getProductName());
+            inventory.setPrice(defaultPrice);
+            inventory.setLastPriceUpdated(LocalDateTime.now());
         }
+
         inventoryRepository.save(inventory);
         return true;
-    }
-
-    private float getDefaultPrice(String productName) {
-        switch (productName.toLowerCase()) {
-            case "petrol":
-                return 104.5f;
-            case "diesel":
-                return 92.0f;
-            default:
-                return 100.0f;
-        }
     }
 
     public boolean updatePrice(String productName, float newPrice) {
         Optional<Inventory> latest = inventoryRepository.findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(productName);
         if (latest.isPresent()) {
-            Inventory updatedEntry = new Inventory();
             Inventory previous = latest.get();
-            updatedEntry.setProductName(previous.getProductName());
-            updatedEntry.setProductID(previous.getProductID());
-            updatedEntry.setQuantity(previous.getQuantity());
-            updatedEntry.setTankCapacity(previous.getTankCapacity());
-            updatedEntry.setCurrentLevel(previous.getCurrentLevel());
-            updatedEntry.setBookingLimit(previous.getBookingLimit());
-            updatedEntry.setEmployeeId(previous.getEmployeeId());
-            updatedEntry.setLastUpdated(LocalDateTime.now());
+            Inventory updatedEntry = new Inventory();
+            BeanUtils.copyProperties(previous, updatedEntry);
             updatedEntry.setPrice(newPrice);
+            updatedEntry.setLastUpdated(LocalDateTime.now());
+            updatedEntry.setLastPriceUpdated(LocalDateTime.now()); // also update this
+
             inventoryRepository.save(updatedEntry);
             return true;
         }

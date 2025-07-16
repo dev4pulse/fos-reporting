@@ -31,4 +31,7 @@ public class Inventory {
     private Long employeeId;
     @NotNull
     private float price;
+    private LocalDateTime lastPriceUpdated;
+    @Column(nullable = false)
+    private String metric = "liters"; // default at the entity level (optional)
 }

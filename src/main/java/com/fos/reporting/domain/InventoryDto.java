@@ -15,4 +15,5 @@ public class InventoryDto {
     private float bookingLimit;
     private Long employeeId;
     private float price;
+    private String metric; // new
 }
