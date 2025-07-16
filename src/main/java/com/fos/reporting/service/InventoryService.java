@@ -26,33 +26,41 @@ public class InventoryService {
     }
 
     public boolean addToInventory(InventoryDto dto) {
-        Inventory inventory = new Inventory();
-        inventory.setProductName(dto.getProductName().trim().toLowerCase());
-        inventory.setProductID(dto.getProductID());
-        inventory.setQuantity(dto.getQuantity());
-        inventory.setTankCapacity(dto.getTankCapacity());
-        inventory.setCurrentLevel(dto.getCurrentLevel());
-        inventory.setBookingLimit(dto.getBookingLimit());
-        inventory.setEmployeeId(dto.getEmployeeId());
-        inventory.setLastUpdated(LocalDateTime.now());
-        if (dto.getMetric() != null && !dto.getMetric().isBlank()) {
-            inventory.setMetric(dto.getMetric().toLowerCase());
-        } else {
-            inventory.setMetric("liters"); // default value
+        String productName = dto.getProductName().trim().toLowerCase();
+        float incomingQty = dto.getQuantity();
+
+        Optional<Inventory> latestOpt = inventoryRepository
+                .findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(productName);
+
+        Inventory newInventory = new Inventory();
+        newInventory.setProductName(productName);
+        newInventory.setProductID(dto.getProductID());
+        newInventory.setQuantity(incomingQty);
+        newInventory.setTankCapacity(dto.getTankCapacity());
+        newInventory.setCurrentLevel(dto.getCurrentLevel());
+        newInventory.setEmployeeId(dto.getEmployeeId());
+        newInventory.setLastUpdated(LocalDateTime.now());
+        newInventory.setPrice(dto.getPrice() > 0 ? dto.getPrice() : getDefaultPrice(productName));
+        newInventory.setMetric(dto.getMetric() != null ? dto.getMetric() : "liters");
+
+        // Adjust bookingLimit logic
+        float newBookingLimit = dto.getBookingLimit();
+
+        if (latestOpt.isPresent()) {
+            Inventory latest = latestOpt.get();
+
+            if (incomingQty < latest.getQuantity()) {
+                // petrol decreased => increase booking limit by 10%
+                newBookingLimit = (float) (latest.getBookingLimit() * 1.10);
+            }
         }
 
-        if (dto.getPrice() > 0) {
-            inventory.setPrice(dto.getPrice());
-            inventory.setLastPriceUpdated(LocalDateTime.now()); // track last price update
-        } else {
-            float defaultPrice = getDefaultPrice(dto.getProductName());
-            inventory.setPrice(defaultPrice);
-            inventory.setLastPriceUpdated(LocalDateTime.now());
-        }
+        newInventory.setBookingLimit(newBookingLimit);
 
-        inventoryRepository.save(inventory);
+        inventoryRepository.save(newInventory);
         return true;
     }
+
 
     public boolean updatePrice(String productName, float newPrice) {
         Optional<Inventory> latest = inventoryRepository.findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(productName);
