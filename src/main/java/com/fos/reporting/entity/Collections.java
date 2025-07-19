@@ -22,12 +22,8 @@ public class Collections {
     private float cashReceived;
     private float phonePay;
     private float creditCard;
-    private float borrowedAmount;
     private float shortCollections;
     private double expectedTotal;
     private double receivedTotal;
     private double difference;
-
-    @OneToMany(mappedBy = "collection", cascade = CascadeType.ALL)
-    private List<Borrower> borrowers = new ArrayList<>();
 }

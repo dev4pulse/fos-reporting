@@ -12,5 +12,4 @@ public class EntryDto {
     private float cashReceived;
     private float phonePay;
     private float creditCard;
-    private List<BorrowerDto> borrowers;
 }

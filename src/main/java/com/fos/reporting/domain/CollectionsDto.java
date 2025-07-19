@@ -15,7 +15,5 @@ public class CollectionsDto {
     private float cashReceived;
     private float phonePay;
     private float creditCard;
-    private float borrowedAmount;
     private float shortCollections;
-    private List<BorrowerDto> borrowers;
 }
