@@ -87,8 +87,7 @@ public class ReportService {
 
             double received = dto.getCashReceived()
                     + dto.getPhonePay()
-                    + dto.getCreditCard()
-                    + dto.getBorrowedAmount();
+                    + dto.getCreditCard();
 
             collections.setExpectedTotal(expected);
             collections.setReceivedTotal(received);
@@ -96,15 +95,7 @@ public class ReportService {
 
             Collections saved = collectionsRepository.save(collections);
 
-            if (dto.getBorrowers() != null) {
-                for (BorrowerDto b : dto.getBorrowers()) {
-                    Borrower borrower = new Borrower();
-                    BeanUtils.copyProperties(b, borrower);
-                    borrower.setBorrowedAt(LocalDateTime.now());
-                    borrower.setCollection(saved);
-                    borrowerRepository.save(borrower);
-                }
-            }
+
             return saved.getId() != null && saved.getId() > 0;
         } catch (Exception e) {
             e.printStackTrace();
