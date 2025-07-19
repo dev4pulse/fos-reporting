@@ -46,6 +46,7 @@ public class ReportService {
                 sales.setGun(product.getGun());
                 sales.setEmployeeId(entryProduct.getEmployeeId());
 
+
                 float opening = product.getOpening() == 0f
                         ? getLastClosing(product.getProductName(), product.getGun())
                         : product.getOpening();
