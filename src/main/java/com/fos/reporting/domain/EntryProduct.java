@@ -9,6 +9,6 @@ import java.util.List;
 public class EntryProduct {
     private String date; // Expecting format: yyyy-MM-dd HH:mm:ss
     @NotNull
-    private Integer employeeId;
+    private Long employeeId;
     private List<Product> products;
 }

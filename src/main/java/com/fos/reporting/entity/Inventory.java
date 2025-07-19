@@ -9,12 +9,14 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "inventory")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Inventory {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long inventoryID;
     @NotNull
-    private int productID;
+    private Integer productID;
     @NotNull
     private String productName;
     @NotNull
@@ -33,5 +35,5 @@ public class Inventory {
     private float price;
     private LocalDateTime lastPriceUpdated;
     @Column(nullable = false)
-    private String metric = "liters"; // default at the entity level (optional)
+    private String metric = "liters";
 }

@@ -43,19 +43,17 @@ public class InventoryService {
         newInventory.setPrice(dto.getPrice() > 0 ? dto.getPrice() : getDefaultPrice(productName));
         newInventory.setMetric(dto.getMetric() != null ? dto.getMetric() : "liters");
 
-        // Adjust bookingLimit logic
         float newBookingLimit = dto.getBookingLimit();
         if (latestOpt.isPresent()) {
             Inventory latest = latestOpt.get();
             float prevQty = latest.getQuantity();
-            // Calculate difference
             float diff = prevQty - incomingQty;
-            if (diff > 0.01) { // quantity reduced
-                newBookingLimit = (float) (latest.getBookingLimit() * 1.10);
+            if (diff > 0.01) {
+                newBookingLimit = (float) (latest.getBookingLimit() * 1.1);
             } else {
-                // If it's a refill, you might want to reset or maintain limit
-                newBookingLimit = latest.getBookingLimit();
+                newBookingLimit = Math.max(latest.getBookingLimit(), dto.getBookingLimit());
             }
+
         }
 
 

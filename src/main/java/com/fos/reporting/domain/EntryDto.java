@@ -7,7 +7,7 @@ import java.util.List;
 @Data // combination of sales and collections
 public class EntryDto {
     private String date;
-    private int employeeId;
+    private Long employeeId;
     private List<Product> products;
     private float cashReceived;
     private float phonePay;

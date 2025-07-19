@@ -10,21 +10,24 @@ import lombok.*;
 @Entity
 @Table(name = "employee")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Employee {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long employeeId;
+    private Long employeeId;
+
     @NotNull
     private String employeeFirstName;
     @NotNull
     private String employeeLastName;
     @Email
     private String employeeEmail;
-    private long employeePhoneNumber;
+    private Long employeePhoneNumber;
     @NotNull
     private String employeeRole;
     @NotNull
-    private int employeeSalary;
+    private Integer employeeSalary;
     @NotNull
     private LocalDate startDate;
     private LocalDate endDate;

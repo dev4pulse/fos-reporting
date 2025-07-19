@@ -7,16 +7,15 @@ import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CollectionsDto {
-    @NotNull
-    private String date; // Expecting format: yyyy-MM-dd HH:mm:ss
-    @NotNull
-    private Integer employeeId;
+    @NotNull private String date; // yyyy-MM-dd HH:mm:ss
+    @NotNull private Long employeeId;
     private float cashReceived;
     private float phonePay;
     private float creditCard;
     private float borrowedAmount;
     private float shortCollections;
-
     private List<BorrowerDto> borrowers;
 }

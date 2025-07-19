@@ -30,7 +30,7 @@ public class ReportService {
     @Autowired
     private BorrowerRepository borrowerRepository;
 
-    public Float getLastClosing(String productName, String gun) {
+    public float getLastClosing(String productName, String gun) {
         Sales last = salesRepository.findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
         return (last != null) ? last.getClosingStock() : 0f;
     }
@@ -46,10 +46,9 @@ public class ReportService {
                 sales.setGun(product.getGun());
                 sales.setEmployeeId(entryProduct.getEmployeeId());
 
-                float opening = product.getOpening();
-                if (opening == 0f) {
-                    opening = getLastClosing(product.getProductName(), product.getGun());
-                }
+                float opening = product.getOpening() == 0f
+                        ? getLastClosing(product.getProductName(), product.getGun())
+                        : product.getOpening();
 
                 float closing = product.getClosing();
                 float testing = product.getTesting();
@@ -61,15 +60,15 @@ public class ReportService {
                 BigDecimal saleVolume = BigDecimal.valueOf(closing - opening - testing);
                 sales.setSalesInLiters(saleVolume);
 
-                BigDecimal price = BigDecimal.valueOf(product.getPrice());
                 sales.setPrice(product.getPrice());
-                sales.setSalesInRupees(saleVolume.multiply(price).floatValue());
+                float amount = saleVolume.multiply(BigDecimal.valueOf(product.getPrice())).floatValue();
+                sales.setSalesInRupees(amount);
 
                 salesRepository.save(sales);
             }
-
             return true;
         } catch (Exception e) {
+            // In production, replace with real logging
             e.printStackTrace();
             return false;
         }
@@ -78,19 +77,18 @@ public class ReportService {
     public boolean addToCollections(CollectionsDto dto) {
         try {
             LocalDateTime dateTime = LocalDateTime.parse(dto.getDate(), FORMATTER);
-
-            Collections collections = mapToCollections(dto);
+            Collections collections = new Collections();
+            BeanUtils.copyProperties(dto, collections);
             collections.setDateTime(dateTime);
-            collections.setEmployeeId(dto.getEmployeeId());
 
             List<Sales> salesByTime = salesRepository.findByDateTime(dateTime);
-
             double expected = salesByTime.stream()
-                    .map(Sales::getSalesInRupees)
-                    .mapToDouble(Float::doubleValue)
-                    .sum();
+                    .mapToDouble(Sales::getSalesInRupees).sum();
 
-            double received = dto.getCashReceived() + dto.getPhonePay() + dto.getCreditCard() + dto.getBorrowedAmount();
+            double received = dto.getCashReceived()
+                    + dto.getPhonePay()
+                    + dto.getCreditCard()
+                    + dto.getBorrowedAmount();
 
             collections.setExpectedTotal(expected);
             collections.setReceivedTotal(received);
@@ -101,27 +99,19 @@ public class ReportService {
             if (dto.getBorrowers() != null) {
                 for (BorrowerDto b : dto.getBorrowers()) {
                     Borrower borrower = new Borrower();
-                    borrower.setName(b.getName());
-                    borrower.setAmount(b.getAmount());
+                    BeanUtils.copyProperties(b, borrower);
                     borrower.setBorrowedAt(LocalDateTime.now());
                     borrower.setCollection(saved);
                     borrowerRepository.save(borrower);
                 }
             }
-
-            return saved.getId() > 0;
+            return saved.getId() != null && saved.getId() > 0;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    private Collections mapToCollections(CollectionsDto dto) {
-        Collections collections = new Collections();
-        BeanUtils.copyProperties(dto, collections);
-        collections.setDateTime(LocalDateTime.parse(dto.getDate(), FORMATTER));
-        return collections;
-    }
 
     public GetReportResponse getDashboard(GetReportRequest req) {
         LocalDateTime from = LocalDateTime.parse(req.getFromDate(), FORMATTER);
@@ -143,8 +133,14 @@ public class ReportService {
         GetReportResponse response = new GetReportResponse();
         response.setActualCollection((float) totalReceived);
         response.setDifference((float) (petrolExpected + dieselExpected - totalReceived));
-        response.setPetrol(ReportData.builder().saleInLtr((float) petrolLiters).expectedCollections((float) petrolExpected).build());
-        response.setDiesel(ReportData.builder().saleInLtr((float) dieselLiters).expectedCollections((float) dieselExpected).build());
+        response.setPetrol(ReportData.builder()
+                .saleInLtr((float) petrolLiters)
+                .expectedCollections((float) petrolExpected)
+                .build());
+        response.setDiesel(ReportData.builder()
+                .saleInLtr((float) dieselLiters)
+                .expectedCollections((float) dieselExpected)
+                .build());
 
         return response;
     }

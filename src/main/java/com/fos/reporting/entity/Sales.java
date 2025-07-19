@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "sales")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Sales {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -20,7 +22,7 @@ public class Sales {
     private String productName;
     private String gun;
     @NotNull
-    private int employeeId;
+    private Long employeeId;
     private float openingStock;
     private float closingStock;
     private float testingTotal;
