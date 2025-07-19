@@ -15,15 +15,15 @@ public class Borrower {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private String name;
-    private Double amount;
-    private LocalDateTime borrowedAt;
-    private Integer borrowerId;
-    private LocalDate borrowedDate;
-    private Double amountBorrowed;
-    private String customerId;
+    private String customerName;
+    private String customerVehicle;
     private Long employeeId;
-    @ManyToOne
-    @JoinColumn(name = "collection_id")
-    private Collections collection;
+    private Double amountBorrowed;
+    private LocalDate borrowDate;
+    private LocalDate dueDate;
+    private String status;
+    private String notes;
+    private String address;
+    private String phone;
+    private String email;
 }

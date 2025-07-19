@@ -8,11 +8,15 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BorrowerDto {
-    private String name;
-    private Double amount;
-    private String customerId;
+    private String customerName;
+    private String customerVehicle;
     private Long employeeId;
-    private LocalDate borrowedDate;
     private Double amountBorrowed;
-    private Integer borrowerId;
+    private LocalDate borrowDate;
+    private LocalDate dueDate;
+    private String status;
+    private String notes;
+    private String address;
+    private String phone;
+    private String email;
 }
