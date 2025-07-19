@@ -100,10 +100,10 @@ public class ReportService {
                 for (BorrowerDto b : dto.getBorrowers()) {
                     Borrower borrower = new Borrower();
                     BeanUtils.copyProperties(b, borrower);
-                    borrower.setBorrowedAt(LocalDateTime.now());
-                    borrower.setCollection(saved);
+                    borrower.setCollection(saved); // Link to parent collection
                     borrowerRepository.save(borrower);
                 }
+
             }
             return saved.getId() != null && saved.getId() > 0;
         } catch (Exception e) {

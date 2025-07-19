@@ -26,4 +26,8 @@ public class Borrower {
     private String address;
     private String phone;
     private String email;
+
+    @ManyToOne
+    @JoinColumn(name = "collection_id")
+    private Collections collection;
 }

@@ -42,10 +42,7 @@ public class InventoryController {
     //  Latest Price Fetch
     @GetMapping("/inventory/price")
     public ResponseEntity<Float> getPriceFromInventory(@RequestParam String productName) {
-        return inventoryRepository
-                .findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(productName)
-                .map(inventory -> ResponseEntity.ok(inventory.getPrice()))
-                .orElse(ResponseEntity.notFound().build());
+        return inventoryRepository.findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(productName).map(inventory -> ResponseEntity.ok(inventory.getPrice())).orElse(ResponseEntity.notFound().build());
     }
 
     //  Inventory Fetch
@@ -54,11 +51,15 @@ public class InventoryController {
         List<String> distinctNames = inventoryRepository.findDistinctProductNames();
         List<Inventory> latest = new ArrayList<>();
         for (String name : distinctNames) {
-            inventoryRepository
-                    .findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(name)
-                    .ifPresent(latest::add);
+            inventoryRepository.findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(name).ifPresent(latest::add);
         }
         return ResponseEntity.ok(latest);
+    }
+
+    @PutMapping("/inventory/{id}")
+    public ResponseEntity<String> updateInventory(@PathVariable Long id, @RequestBody @Valid InventoryDto inventoryDto) {
+        boolean updated = inventoryService.updateInventory(id, inventoryDto);
+        return updated ? ResponseEntity.ok("Inventory updated") : ResponseEntity.status(HttpStatus.NOT_FOUND).body("Inventory not found");
     }
 
 

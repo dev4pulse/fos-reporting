@@ -79,4 +79,17 @@ public class InventoryService {
         }
         return false;
     }
+
+    public boolean updateInventory(Long id, InventoryDto dto) {
+        Optional<Inventory> inventoryOpt = inventoryRepository.findById(id);
+        if (inventoryOpt.isPresent()) {
+            Inventory inventory = inventoryOpt.get();
+            BeanUtils.copyProperties(dto, inventory, "inventoryID", "lastUpdated");
+            inventory.setLastUpdated(LocalDateTime.now());
+            inventoryRepository.save(inventory);
+            return true;
+        }
+        return false;
+    }
+
 }
