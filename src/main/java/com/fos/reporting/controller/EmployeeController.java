@@ -17,44 +17,38 @@ import com.fos.reporting.service.EmployeeService;
 
 @RestController
 public class EmployeeController {
-    @Autowired
     private final EmployeeService employeeService;
 
+    @Autowired
     public EmployeeController(EmployeeService employeeService) {
         this.employeeService = employeeService;
     }
 
-    //Signup
     @PostMapping("/employee")
     public ResponseEntity<String> addEntry(@Valid @RequestBody EmployeeDto employeeDto) {
         try {
             Employee saved = employeeService.registerEmployee(employeeDto);
             return ResponseEntity.ok("Added to employee with ID: " + saved.getEmployeeId());
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Exception: " + e.getMessage());
         }
     }
 
-    // Login
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDto loginRequest, HttpSession session) {
+        System.out.println("request received" );
+
         Optional<Employee> emp = employeeService.login(loginRequest.getUsername(), loginRequest.getPassword());
-        if (emp.isPresent()) {
-            session.setAttribute("employeeId", emp.get().getEmployeeId()); // Store in session
-            return ResponseEntity.ok(Map.of("status", "success", "employeeId", emp.get().getEmployeeId()));
-        }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("status", "fail", "message", "Invalid credentials"));
+        return emp.map(employee -> {session.setAttribute("employeeId", employee.getEmployeeId());
+            return ResponseEntity.ok(Map.of("status", "success", "employeeId", employee.getEmployeeId()));
+        }).orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("status", "fail", "message", "Invalid credentials")));
     }
 
-    // Active
     @GetMapping("/active")
     public ResponseEntity<List<Employee>> getActiveEmployees() {
         try {
-            List<Employee> activeEmployees = employeeService.getActiveEmployees();
-            return new ResponseEntity<>(activeEmployees, HttpStatus.OK);
+            return ResponseEntity.ok(employeeService.getActiveEmployees());
         } catch (Exception e) {
-            System.out.println("e" + e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

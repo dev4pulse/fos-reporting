@@ -5,12 +5,11 @@ import lombok.*;
 
 @Data
 public class Product {
-    @NotNull
     private String productName;
     private String gun;
-    private float closing;
     private float opening;
+    private float closing;
+    private float testing;
     @NotNull
     private float price;
-    private float testing;
 }

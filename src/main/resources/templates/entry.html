@@ -101,23 +101,33 @@
       const openingInput = div.querySelector('.opening');
 
       function updateOpeningAndPrice() {
-        const prod = productInput.value.trim();
-        const sub = subInput.value.trim();
-        if (!prod || !sub) return;
+  const prod = productInput.value.trim();
+  const sub = subInput.value.trim();
+  if (!prod || !sub) return;
 
-        fetch(`/sales/last?productName=${encodeURIComponent(prod)}&gun=${encodeURIComponent(sub)}`)
-          .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
-          .then(data => { openingInput.value = data.lastClosing; })
-          .catch(console.error);
+  fetch(`/inventory/price?productName=${encodeURIComponent(prod)}`)
+    .then(r => {
+      if (!r.ok) throw new Error("Price fetch failed");
+      return r.json();
+    })
+    .then(price => {
+      console.log("Fetched price for", prod, ":", price);
+      div.querySelector('.price').value = price;
+      recalcRow(div);
+    })
+    .catch(err => {
+      console.error("Error fetching price:", err);
+    });
 
-        fetch(`/sales/price?productName=${encodeURIComponent(prod)}&gun=${encodeURIComponent(sub)}`)
-          .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
-          .then(price => {
-            div.querySelector('.price').value = price;
-            recalcRow(div);
-          })
-          .catch(console.error);
-      }
+  // Leave this fetch for /sales/last if needed separately
+  fetch(`/sales/last?productName=${encodeURIComponent(prod)}&gun=${encodeURIComponent(sub)}`)
+    .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
+    .then(data => {
+      openingInput.value = data.lastClosing;
+    })
+    .catch(console.error);
+}
+
 
       productInput.addEventListener("change", updateOpeningAndPrice);
       subInput.addEventListener("change", updateOpeningAndPrice);

@@ -8,23 +8,26 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Entity
-@Table(name = "Employee")
+@Table(name = "employee")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Employee {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long employeeId;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long employeeId;
+
     @NotNull
     private String employeeFirstName;
     @NotNull
     private String employeeLastName;
     @Email
     private String employeeEmail;
-    private long employeePhoneNumber;
+    private Long employeePhoneNumber;
     @NotNull
     private String employeeRole;
     @NotNull
-    private int employeeSalary;
+    private Integer employeeSalary;
     @NotNull
     private LocalDate startDate;
     private LocalDate endDate;

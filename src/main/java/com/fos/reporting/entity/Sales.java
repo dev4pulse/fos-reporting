@@ -10,18 +10,19 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "sales")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Sales {
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     @NotNull
     private LocalDateTime dateTime;
     @NotNull
     private String productName;
-    @Column(name = "gun")
     private String gun;
     @NotNull
-    private int employeeId;
+    private Long employeeId;
     private float openingStock;
     private float closingStock;
     private float testingTotal;

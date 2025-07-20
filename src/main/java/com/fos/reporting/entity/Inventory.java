@@ -7,14 +7,16 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Inventory")
+@Table(name = "inventory")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Inventory {
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long inventoryID;
     @NotNull
-    private int productID;
+    private Integer productID;
     @NotNull
     private String productName;
     @NotNull
@@ -29,4 +31,9 @@ public class Inventory {
     private LocalDateTime lastUpdated;
     @NotNull
     private Long employeeId;
+    @NotNull
+    private float price;
+    private LocalDateTime lastPriceUpdated;
+    @Column(nullable = false)
+    private String metric = "liters";
 }

@@ -11,9 +11,9 @@ public class EmployeeDto {
     private String employeeLastName;
     @Email
     private String employeeEmail;
-    private long employeePhoneNumber;
+    private Long employeePhoneNumber;
     private String employeeRole;
-    private int employeeSalary;
+    private Integer employeeSalary;
     private LocalDate startDate;
     private LocalDate endDate;
     private boolean isActive;

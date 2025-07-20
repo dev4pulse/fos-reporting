@@ -7,11 +7,13 @@ import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CollectionsDto {
     @NotNull
-    private String date;
+    private String date; // yyyy-MM-dd HH:mm:ss
     @NotNull
-    private int employeeId;
+    private Long employeeId;
     private float cashReceived;
     private float phonePay;
     private float creditCard;
