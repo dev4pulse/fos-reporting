@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
-    Optional<Inventory> findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(String productName);
+    Optional<Inventory> findTopByProductNameIgnoreCaseOrderByLastUpdatedAsc(String productName);
 
     @Query("SELECT DISTINCT LOWER(i.productName) FROM Inventory i")
     List<String> findDistinctProductNames();

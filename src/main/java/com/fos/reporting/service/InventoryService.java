@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 
 @Service
@@ -30,7 +31,7 @@ public class InventoryService {
         float incomingQty = dto.getQuantity();
 
         Optional<Inventory> latestOpt = inventoryRepository
-                .findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(productName);
+                .findTopByProductNameIgnoreCaseOrderByLastUpdatedAsc(productName);
 
         Inventory newInventory = new Inventory();
         newInventory.setProductName(productName);
@@ -65,15 +66,16 @@ public class InventoryService {
 
 
     public boolean updatePrice(String productName, float newPrice) {
-        Optional<Inventory> latest = inventoryRepository.findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(productName);
+        Optional<Inventory> latest = inventoryRepository.findTopByProductNameIgnoreCaseOrderByLastUpdatedAsc(productName);
         if (latest.isPresent()) {
             Inventory previous = latest.get();
             Inventory updatedEntry = new Inventory();
             BeanUtils.copyProperties(previous, updatedEntry);
             updatedEntry.setPrice(newPrice);
-            updatedEntry.setLastUpdated(LocalDateTime.now());
-            updatedEntry.setLastPriceUpdated(LocalDateTime.now()); // also update this
-
+            //updatedEntry.setLastPriceUpdated(LocalDateTime.now());
+            updatedEntry.setLastPriceUpdated(LocalDateTime.now().
+                    atZone(ZoneId.of("Asia/Kolkata")).toLocalDateTime()); // also update this
+            updatedEntry.setInventoryID(null);
             inventoryRepository.save(updatedEntry);
             return true;
         }

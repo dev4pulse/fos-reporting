@@ -42,7 +42,7 @@ public class InventoryController {
     //  Latest Price Fetch
     @GetMapping("/inventory/price")
     public ResponseEntity<Float> getPriceFromInventory(@RequestParam String productName) {
-        return inventoryRepository.findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(productName).map(inventory -> ResponseEntity.ok(inventory.getPrice())).orElse(ResponseEntity.notFound().build());
+        return inventoryRepository.findTopByProductNameIgnoreCaseOrderByLastUpdatedAsc(productName).map(inventory -> ResponseEntity.ok(inventory.getPrice())).orElse(ResponseEntity.notFound().build());
     }
 
     //  Inventory Fetch
@@ -51,7 +51,7 @@ public class InventoryController {
         List<String> distinctNames = inventoryRepository.findDistinctProductNames();
         List<Inventory> latest = new ArrayList<>();
         for (String name : distinctNames) {
-            inventoryRepository.findTopByProductNameIgnoreCaseOrderByLastUpdatedDesc(name).ifPresent(latest::add);
+            inventoryRepository.findTopByProductNameIgnoreCaseOrderByLastUpdatedAsc(name).ifPresent(latest::add);
         }
         return ResponseEntity.ok(latest);
     }
@@ -64,7 +64,7 @@ public class InventoryController {
 
 
     //  Only Price Update
-    @PutMapping("/inventory/update-price")
+    @PostMapping("/inventory/update-price")
     public ResponseEntity<String> updateProductPrice(@RequestBody @Valid UpdatePriceDto dto) {
         boolean updated = inventoryService.updatePrice(dto.getProductName(), dto.getNewPrice());
         if (updated) {
