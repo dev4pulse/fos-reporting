@@ -4,17 +4,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Data
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
 public class Product {
-    @NotNull
     private String productName;
-    private String subProduct;
-    private float closing;
+    private String gun;
     private float opening;
+    private float closing;
+    private float testing;
     @NotNull
     private float price;
-    private float testing;
 }

@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Sales Entry Form</title>
+     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         let productIndex = 0;
 
@@ -15,8 +17,8 @@
                 <label>Product Name:</label>
                 <input type="text" name="productName" required><br>
 
-                <label>Sub Product:</label>
-                <input type="text" name="subProduct"><br>
+                <label>Select Gun:</label>
+                <input type="text" name="Select Gun"><br>
 
                 <label>Opening:</label>
                 <input type="number" step="any" name="opening"><br>
@@ -41,7 +43,7 @@
                 const inputs = group.querySelectorAll("input");
                 const product = {
                     productName: inputs[0].value,
-                    subProduct: inputs[1].value,
+                    gun: inputs[1].value,
                     opening: parseFloat(inputs[2].value || 0),
                     closing: parseFloat(inputs[3].value || 0),
                     price: parseFloat(inputs[4].value),
@@ -57,8 +59,8 @@
             event.preventDefault();
 
             const entry = {
-                date: document.getElementById("date").value,
-                employeeId: parseInt(document.getElementById("employeeId").value),
+                date: document.getElementById("salesDate").value,
+                employeeId: parseInt(document.getElementById("salesEmployeeDropdown").value),
                 products: collectProducts()
             };
 
@@ -78,16 +80,45 @@
             addProductRow(); // Add at least one row on page load
         };
     </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            flatpickr("#salesDate", {
+                enableTime: true,
+                dateFormat: "dd-MM-yyyy HH:mm:ss",
+                altInput: true,
+                altFormat: "F j, Y h:i K",
+                defaultDate: new Date()
+            });
+
+            fetch("/employees/active")
+                .then(response => response.json())
+                .then(data => {
+                    const salesDropdown = document.getElementById("salesEmployeeDropdown");
+                    salesDropdown.innerHTML = '<option value="">Select Employee ID and Name</option>';
+                    data.forEach(emp => {
+                        const option = document.createElement("option");
+                        option.value = emp.employeeId;
+                        option.text = emp.employeeId + ' - ' + emp.employeeName;
+                        salesDropdown.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching employees:', error);
+                    alert('Failed to load employee data for sales form.');
+                });
+    });
+    </script>
 </head>
 <body>
 <h1>Sales Entry</h1>
 
 <form id="salesForm" onsubmit="submitForm(event)">
     <label>Date:</label>
-    <input type="text" id="date" name="date" required><br>
-
+    <input type="text" class="form-control" id="salesDate" name="salesDate" placeholder="Select Sales Date" required>
     <label>Employee ID:</label>
-    <input type="number" id="employeeId" name="employeeId" required><br>
+    <select class="form-control" id="salesEmployeeDropdown" name="employeeId" required>
+        <option value="">Select Employee ID and Name</option>
+    </select>
 
     <h3>Products</h3>
     <div id="products"></div>

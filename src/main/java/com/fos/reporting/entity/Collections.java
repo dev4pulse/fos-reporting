@@ -4,29 +4,25 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "collections")
 @Data
-@Setter
-@Getter
-@AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@AllArgsConstructor
 public class Collections {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
     private LocalDateTime dateTime;
-    private int employeeId;
+    private Long employeeId;
     private float cashReceived;
     private float phonePay;
     private float creditCard;
-    private float borrowedAmount;
-    private float debtRecovered;
-    private String borrower;
-    private float badHandling;
-    private float expenses;
+    private float shortCollections;
     private double expectedTotal;
     private double receivedTotal;
     private double difference;
