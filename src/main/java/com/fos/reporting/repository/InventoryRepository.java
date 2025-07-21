@@ -1,6 +1,7 @@
 package com.fos.reporting.repository;
 
 import com.fos.reporting.entity.Inventory;
+import com.fos.reporting.entity.Product;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -10,9 +11,10 @@ import java.util.Optional;
 
 @Repository
 public interface InventoryRepository extends JpaRepository<Inventory, Long> {
-    Optional<Inventory> findTopByProductNameIgnoreCaseOrderByLastUpdatedAsc(String productName);
+    Optional<Inventory> findTopByProductOrderByLastUpdatedDesc(Product product);
 
-    @Query("SELECT DISTINCT LOWER(i.productName) FROM Inventory i")
-    List<String> findDistinctProductNames();
+    List<Inventory> findByProductOrderByLastUpdatedDesc(Product product);
 
+    @Query("SELECT DISTINCT i.product FROM Inventory i")
+    List<Product> findDistinctProducts();
 }
