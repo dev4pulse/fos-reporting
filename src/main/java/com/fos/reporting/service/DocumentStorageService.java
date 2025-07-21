@@ -7,6 +7,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface DocumentStorageService {
-    DocumentDto uploadDocument(MultipartFile file, String documentType, LocalDate expiryDate);
+    DocumentDto uploadDocument(MultipartFile file, String documentType, LocalDate expiryDate,
+                               String issuingAuthority, LocalDate issueDate, Integer renewalPeriodDays,
+                               String responsibleParty, String notes);
+
     List<DocumentDto> listAllDocuments();
 }

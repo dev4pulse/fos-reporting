@@ -10,6 +10,11 @@ public class DocumentDto {
     private String fileName;
     private String documentType;
     private String fileUrl;
-    private LocalDate expiryDate;
     private LocalDateTime uploadTimestamp;
+    private LocalDate expiryDate;
+    private String issuingAuthority;
+    private LocalDate issueDate;
+    private Integer renewalPeriodDays;
+    private String responsibleParty;
+    private String notes;
 }

@@ -2,7 +2,6 @@ package com.fos.reporting.service;
 
 import com.fos.reporting.domain.DocumentDto;
 import com.fos.reporting.entity.Document;
-// It's good practice to have a specific exception for file operations
 import com.fos.reporting.exception.FileUploadException;
 import com.fos.reporting.repository.DocumentRepository;
 import com.google.cloud.storage.BlobId;
@@ -39,7 +38,9 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
 
     @Override
     @Transactional
-    public DocumentDto uploadDocument(MultipartFile file, String documentType, LocalDate expiryDate) {
+    public DocumentDto uploadDocument(MultipartFile file, String documentType, LocalDate expiryDate,
+                                      String issuingAuthority, LocalDate issueDate, Integer renewalPeriodDays,
+                                      String responsibleParty, String notes) {
         // --- Improvement 1: Sanitize the filename for security ---
         String originalFilename = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
         if (originalFilename.contains("..")) {
@@ -68,16 +69,20 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
             document.setFileName(originalFilename);
             document.setDocumentType(documentType);
             document.setFileUrl(fileUrl);
-            document.setExpiryDate(expiryDate);
             document.setUploadTimestamp(LocalDateTime.now());
+            document.setIssuingAuthority(issuingAuthority);
+            document.setIssueDate(issueDate);
+            document.setExpiryDate(expiryDate); // This was already here
+            document.setRenewalPeriodDays(renewalPeriodDays);
+            document.setResponsibleParty(responsibleParty);
+            document.setNotes(notes);
 
             Document savedDocument = documentRepository.save(document);
 
             return convertToDto(savedDocument);
 
         } catch (IOException e) {
-            // --- Improvement 3: Use a specific custom exception ---
-            throw new FileUploadException("Failed to upload file '" + originalFilename + "' to Google Cloud Storage.", e);
+            throw new FileUploadException("Failed to upload file '" + file.getOriginalFilename() + "' to Google Cloud Storage.", e);
         }
     }
 
@@ -95,8 +100,14 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
         dto.setFileName(document.getFileName());
         dto.setDocumentType(document.getDocumentType());
         dto.setFileUrl(document.getFileUrl());
-        dto.setExpiryDate(document.getExpiryDate());
         dto.setUploadTimestamp(document.getUploadTimestamp());
+        dto.setIssuingAuthority(document.getIssuingAuthority());
+        dto.setIssueDate(document.getIssueDate());
+        dto.setExpiryDate(document.getExpiryDate());
+        dto.setRenewalPeriodDays(document.getRenewalPeriodDays());
+        dto.setResponsibleParty(document.getResponsibleParty());
+        dto.setNotes(document.getNotes());
+
         return dto;
     }
 }
