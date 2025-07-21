@@ -2,6 +2,8 @@ package com.fos.reporting.service;
 
 import com.fos.reporting.domain.DocumentDto;
 import com.fos.reporting.entity.Document;
+// It's good practice to have a specific exception for file operations
+import com.fos.reporting.exception.FileUploadException;
 import com.fos.reporting.repository.DocumentRepository;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
@@ -9,12 +11,14 @@ import com.google.cloud.storage.Storage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -36,26 +40,32 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
     @Override
     @Transactional
     public DocumentDto uploadDocument(MultipartFile file, String documentType, LocalDate expiryDate) {
+        // --- Improvement 1: Sanitize the filename for security ---
+        String originalFilename = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        if (originalFilename.contains("..")) {
+            throw new FileUploadException("Invalid filename. Contains relative path sequence: " + originalFilename);
+        }
+
+        // 1. Generate a unique blob name for the file in GCS
+        String blobName = UUID.randomUUID().toString() + "-" + originalFilename;
+
+        // 2. Configure the blob for upload
+        BlobId blobId = BlobId.of(bucketName, blobName);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(file.getContentType())
+                .build();
+
         try {
-            // 1. Generate a unique blob name for the file in GCS
-            String blobName = UUID.randomUUID().toString() + "-" + file.getOriginalFilename();
-
-            // 2. Configure the blob for upload
-            BlobId blobId = BlobId.of(bucketName, blobName);
-            BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
-                    .setContentType(file.getContentType())
-                    .build();
-
-            // 3. Perform the upload to GCS
-            storage.create(blobInfo, file.getBytes());
+            // --- Improvement 2: Use InputStream for memory efficiency ---
+            // This streams the file directly, avoiding loading it all into memory.
+            storage.create(blobInfo, file.getInputStream());
 
             // 4. Construct the public URL of the uploaded file
-            // IMPORTANT: This requires your GCS bucket to be publicly accessible.
             String fileUrl = String.format("https://storage.googleapis.com/%s/%s", bucketName, blobName);
 
             // 5. Create and save the document metadata to our database
             Document document = new Document();
-            document.setFileName(file.getOriginalFilename());
+            document.setFileName(originalFilename);
             document.setDocumentType(documentType);
             document.setFileUrl(fileUrl);
             document.setExpiryDate(expiryDate);
@@ -66,8 +76,8 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
             return convertToDto(savedDocument);
 
         } catch (IOException e) {
-            // You can use your custom exception handler here
-            throw new RuntimeException("Failed to upload file to Google Cloud Storage", e);
+            // --- Improvement 3: Use a specific custom exception ---
+            throw new FileUploadException("Failed to upload file '" + originalFilename + "' to Google Cloud Storage.", e);
         }
     }
 
