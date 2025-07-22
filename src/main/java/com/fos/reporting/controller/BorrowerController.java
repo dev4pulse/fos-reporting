@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/borrowers")
+@RequestMapping("/borrowers")
 public class BorrowerController {
 
     @Autowired
@@ -40,7 +40,6 @@ public class BorrowerController {
         return ResponseEntity.ok(history);
     }
 
-    // (Optional) Create new borrower
     @PostMapping
     public ResponseEntity<Borrower> createBorrower(@Valid @RequestBody BorrowerDto dto) {
         Borrower saved = borrowerService.createBorrower(dto);
