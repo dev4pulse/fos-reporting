@@ -3,60 +3,133 @@ package com.fos.reporting.service;
 import com.fos.reporting.domain.ProductDto;
 import com.fos.reporting.entity.Product;
 import com.fos.reporting.repository.ProductRepository;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.fos.reporting.domain.ProductStatus;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
 
-    @Autowired
-    private ProductRepository productRepository;
+    private final ProductRepository productRepository;
 
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    // Best Practice: Use constructor injection for dependencies. It's cleaner and better for testing.
+    public ProductService(ProductRepository productRepository) {
+        this.productRepository = productRepository;
     }
 
-    public Optional<Product> getProductById(Long id) {
-        return productRepository.findById(id);
+    /**
+     * Creates a new product.
+     * @param productDto The DTO containing the details for the new product.
+     * @return The created product as a DTO, including its new ID.
+     * @throws IllegalStateException if a product with the same name already exists.
+     */
+    @Transactional
+    public ProductDto createProduct(ProductDto productDto) {
+        // Check if a product with the same name already exists (case-insensitive).
+        productRepository.findByNameIgnoreCase(productDto.getProductName()).ifPresent(p -> {
+            throw new IllegalStateException("Product with name '" + productDto.getProductName() + "' already exists.");
+        });
+
+        Product product = toEntity(productDto);
+        if (productDto.getStatus() == null) {
+            product.setStatus(ProductStatus.ACTIVE);
+        }
+        Product savedProduct = productRepository.save(product);
+        return toDto(savedProduct);
     }
 
-    public Optional<Product> getProductByName(String name) {
-        return productRepository.findByNameIgnoreCase(name);
-    }
+    /**
+     * Updates an existing product.
+     * @param id The ID of the product to update.
+     * @param productDto The DTO with the updated information.
+     * @return The updated product as a DTO.
+     */
+    @Transactional
+    public ProductDto updateProduct(Long id, ProductDto productDto) {
+        Product existingProduct = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
 
-    public Product createProduct(ProductDto dto) {
-        // Check if product already exists
-        if (productRepository.existsByNameIgnoreCase(dto.getName())) {
-            throw new IllegalArgumentException("Product with name '" + dto.getName() + "' already exists");
+        // Update the entity's properties from the DTO
+        existingProduct.setName(productDto.getProductName());
+        existingProduct.setDescription(productDto.getDescription());
+        existingProduct.setTankCapacity(productDto.getTankCapacity());
+        existingProduct.setPrice(productDto.getPrice());
+
+        if (productDto.getStatus() != null) {
+            existingProduct.setStatus(productDto.getStatus());
         }
 
-        Product product = new Product();
-        BeanUtils.copyProperties(dto, product, "productId");
-        return productRepository.save(product);
+        Product updatedProduct = productRepository.save(existingProduct);
+        return toDto(updatedProduct);
     }
 
-    public Product updateProduct(Long id, ProductDto dto) {
+    /**
+     * Retrieves all products.
+     * @return A list of all products as DTOs.
+     */
+    @Transactional(readOnly = true)
+    public List<ProductDto> getAllProducts() {
+        return productRepository.findAll()
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Retrieves a single product by its ID.
+     * @param id The ID of the product to retrieve.
+     * @return The product as a DTO.
+     */
+    @Transactional(readOnly = true)
+    public ProductDto getProductById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
-
-        BeanUtils.copyProperties(dto, product, "productId", "createdAt");
-        return productRepository.save(product);
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
+        return toDto(product);
     }
 
-    public boolean deleteProduct(Long id) {
-        Optional<Product> productOpt = productRepository.findById(id);
-        if (productOpt.isPresent()) {
-            productRepository.delete(productOpt.get());
-            return true;
+    /**
+     * Deletes a product by its ID.
+     * @param id The ID of the product to delete.
+     */
+    @Transactional
+    public void deleteProduct(Long id) {
+        if (!productRepository.existsById(id)) {
+            throw new EntityNotFoundException("Product not found with id: " + id);
         }
-        return false;
+        productRepository.deleteById(id);
     }
 
-    public List<Product> searchByName(String name) {
-        return productRepository.findByNameContaining(name);
+    // --- Helper Methods for Consistent Mapping ---
+
+    /**
+     * Maps a Product entity to a ProductDto.
+     */
+    private ProductDto toDto(Product product) {
+        ProductDto dto = new ProductDto();
+        dto.setProductId(product.getId());
+        dto.setProductName(product.getName());
+        dto.setDescription(product.getDescription());
+        dto.setTankCapacity(product.getTankCapacity());
+        dto.setPrice(product.getPrice());
+        dto.setStatus(product.getStatus());
+        return dto;
+    }
+
+    /**
+     * Maps a ProductDto to a new Product entity for creation.
+     */
+    private Product toEntity(ProductDto dto) {
+        Product product = new Product();
+        // We don't set the ID, as it's generated by the database.
+        product.setName(dto.getProductName());
+        product.setDescription(dto.getDescription());
+        product.setTankCapacity(dto.getTankCapacity());
+        product.setPrice(dto.getPrice());
+        product.setStatus(dto.getStatus());
+        return product;
     }
 }

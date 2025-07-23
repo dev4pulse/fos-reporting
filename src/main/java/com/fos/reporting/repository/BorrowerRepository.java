@@ -11,4 +11,5 @@ public interface BorrowerRepository extends JpaRepository<Borrower, Long> {
      * and sorts them by borrowDate in descending order (most recent first).
      */
     List<Borrower> findByCustomerNameContainingIgnoreCaseOrderByBorrowDateDesc(String customerName);
+    List<Borrower> findAllByOrderByBorrowDateDesc();
 }
