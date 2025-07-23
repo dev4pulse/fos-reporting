@@ -1,9 +1,8 @@
 package com.fos.reporting.entity;
 
-import com.fos.reporting.domain.ProductStatus; // Import the new enum
+import com.fos.reporting.domain.ProductStatus;
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.math.BigDecimal;
 
 @Entity
@@ -26,12 +25,7 @@ public class Product {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    // --- NEW FIELD ---
-    /**
-     * The current status of the product (e.g., ACTIVE, INACTIVE).
-     * Stored as a string in the database for readability.
-     */
-    @Enumerated(EnumType.STRING) // Best practice: stores "ACTIVE" or "INACTIVE" in the DB
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ProductStatus status = ProductStatus.ACTIVE; // Default new products to ACTIVE
+    private ProductStatus status = ProductStatus.ACTIVE;
 }
