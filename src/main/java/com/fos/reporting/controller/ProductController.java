@@ -1,68 +1,78 @@
 package com.fos.reporting.controller;
 
 import com.fos.reporting.domain.ProductDto;
-import com.fos.reporting.entity.Product;
 import com.fos.reporting.service.ProductService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller for managing products.
+ * Follows best practices by using DTOs for the API contract and constructor injection.
+ */
 @RestController
-@RequestMapping("/products")
+@RequestMapping("/products") // 1. Standardized API path
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
 
-    @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+    // 2. Use constructor injection instead of @Autowired
+    public ProductController(ProductService productService) {
+        this.productService = productService;
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        return productService.getProductById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
+    /**
+     * POST /api/products : Creates a new product.
+     */
     @PostMapping
-    public ResponseEntity<Product> createProduct(@Valid @RequestBody ProductDto dto) {
-        try {
-            Product saved = productService.createProduct(dto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-        } catch (Exception e) {
-            // Return null body with error status instead of string message
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        }
+    public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto productDto) {
+        ProductDto savedProduct = productService.createProduct(productDto);
+        return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
     }
 
+    /**
+     * GET /api/products : Gets a list of all products.
+     */
+    @GetMapping
+    public ResponseEntity<List<ProductDto>> getAllProducts() {
+        // 3. This now correctly returns a List<ProductDto>
+        List<ProductDto> products = productService.getAllProducts();
+        return ResponseEntity.ok(products);
+    }
+
+    /**
+     * GET /api/products/{id} : Gets a single product by its ID.
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductDto> getProductById(@PathVariable Long id) {
+        // 4. Simplified logic: The service will throw an exception if not found
+        ProductDto product = productService.getProductById(id);
+        return ResponseEntity.ok(product);
+    }
+
+    /**
+     * PUT /api/products/{id} : Updates an existing product.
+     */
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(
-            @PathVariable Long id,
-            @Valid @RequestBody ProductDto dto) {
-        try {
-            Product updated = productService.updateProduct(id, dto);
-            return ResponseEntity.ok(updated);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
+    public ResponseEntity<ProductDto> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductDto productDto) {
+        ProductDto updatedProduct = productService.updateProduct(id, productDto);
+        return ResponseEntity.ok(updatedProduct);
     }
 
+    /**
+     * DELETE /api/products/{id} : Deletes a product by its ID.
+     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteProduct(@PathVariable Long id) {
-        boolean deleted = productService.deleteProduct(id);
-        return deleted ?
-                ResponseEntity.ok("Product deleted successfully") :
-                ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        // 5. Use 204 No Content for successful deletions
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<Product>> searchProducts(@RequestParam String name) {
-        return ResponseEntity.ok(productService.searchByName(name));
-    }
+    // Note: The "/search" endpoint is removed. This logic should be handled
+    // by the service layer and can be added as a parameter to getAllProducts if needed,
+    // e.g., @GetMapping(params = "name")
 }
