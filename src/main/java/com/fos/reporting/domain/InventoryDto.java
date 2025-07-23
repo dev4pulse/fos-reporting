@@ -1,18 +1,21 @@
 package com.fos.reporting.domain;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import jakarta.validation.constraints.Positive;
+import lombok.Data;
 
 @Data
 public class InventoryDto {
-    @NotNull
+
+    @NotNull(message = "Product ID cannot be null.")
     private Long productId;
-    private float quantity;
-    @NotNull
-    private int tankCapacity;
-    @NotNull
-    private float currentLevel;
+
+    @NotNull(message = "Quantity cannot be null.") // This allows positive and negative numbers, but not zero.
+    private Double quantity;
+
     private Long employeeId;
-    private float price;
+
+    @NotBlank(message = "Metric (unit of measurement) cannot be blank.")
     private String metric;
 }
