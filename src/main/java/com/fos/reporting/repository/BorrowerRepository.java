@@ -6,5 +6,9 @@ import com.fos.reporting.entity.Borrower;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface BorrowerRepository extends JpaRepository<Borrower, Long> {
-    List<Borrower> findByCustomerName(String customerName);
+    /**
+     * Finds all borrower records for a given customer name, ignoring case,
+     * and sorts them by borrowDate in descending order (most recent first).
+     */
+    List<Borrower> findByCustomerNameContainingIgnoreCaseOrderByBorrowDateDesc(String customerName);
 }

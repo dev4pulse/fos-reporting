@@ -17,9 +17,9 @@ public class Borrower {
     private Long id;
     private String customerName;
     private String customerVehicle;
-    private Long employeeId;
+    private String employeeId;
     private Double amountBorrowed;
-    private LocalDate borrowDate;
+    private LocalDateTime borrowDate;
     private LocalDate dueDate;
     private String status;
     private String notes;
