@@ -48,15 +48,12 @@ public class BorrowerService {
     @Transactional(readOnly = true)
     public List<BorrowerDto> findBorrowers(String customerName) {
         List<Borrower> borrowers;
-        // Check if a customerName was provided and is not just whitespace
         if (StringUtils.hasText(customerName)) {
-            // Use the new sorting method
             borrowers = borrowerRepository.findByCustomerNameContainingIgnoreCaseOrderByBorrowDateDesc(customerName);
         } else {
-            // You might want to sort the full list as well
-            borrowers = borrowerRepository.findAll(); // Consider adding a sorted version here too
+            // Use the new sorted method for a consistent default order
+            borrowers = borrowerRepository.findAllByOrderByBorrowDateDesc();
         }
-        // Map the list of entities to a list of DTOs
         return borrowers.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
