@@ -2,6 +2,7 @@ package com.fos.reporting.service;
 
 import com.fos.reporting.domain.InventoryDto;
 import com.fos.reporting.domain.InventoryRecordDto;
+import com.fos.reporting.domain.ProductInventoryStatusDto;
 import com.fos.reporting.domain.ProductStatus;
 import com.fos.reporting.entity.InventoryLog;
 import com.fos.reporting.entity.Product;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -25,6 +27,33 @@ public class InventoryService {
     public InventoryService(InventoryLogRepository inventoryLogRepository, ProductRepository productRepository) {
         this.inventoryLogRepository = inventoryLogRepository;
         this.productRepository = productRepository;
+    }
+    @Transactional(readOnly = true)
+    public List<ProductInventoryStatusDto> getLatestInventoryForAllProducts() {
+        // 1. Fetch all products. This will be the base of our response.
+        List<Product> allProducts = productRepository.findAll();
+
+        // 2. Fetch all the latest inventory logs in a single, efficient query.
+        List<InventoryLog> latestLogs = inventoryLogRepository.findLatestLogForEachProduct();
+
+        // 3. Convert the list of logs into a Map for quick lookups (O(1) access).
+        //    The key is the product ID.
+        Map<Long, InventoryLog> latestLogsMap = latestLogs.stream()
+                .collect(Collectors.toMap(log -> log.getProduct().getId(), log -> log));
+
+        // 4. Map the products to our DTO, enriching them with inventory data.
+        return allProducts.stream().map(product -> {
+            ProductInventoryStatusDto dto = new ProductInventoryStatusDto(product);
+            InventoryLog latestLog = latestLogsMap.get(product.getId());
+
+            if (latestLog != null) {
+                // If an inventory log exists for this product, update the DTO
+                dto.setCurrentLevel(latestLog.getCurrentLevel());
+                dto.setMetric(latestLog.getMetric());
+                dto.setLastUpdated(latestLog.getTransactionDate());
+            }
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     @Transactional
