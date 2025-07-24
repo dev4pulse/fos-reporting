@@ -1,114 +1,100 @@
 package com.fos.reporting.service;
 
 import com.fos.reporting.domain.InventoryDto;
-import com.fos.reporting.entity.Inventory;
+import com.fos.reporting.domain.InventoryRecordDto;
+import com.fos.reporting.domain.ProductStatus;
+import com.fos.reporting.entity.InventoryLog;
 import com.fos.reporting.entity.Product;
-import com.fos.reporting.repository.InventoryRepository;
+import com.fos.reporting.repository.InventoryLogRepository;
 import com.fos.reporting.repository.ProductRepository;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class InventoryService {
 
-    private static final ZoneId IST_ZONE = ZoneId.of("Asia/Kolkata");
+    private final InventoryLogRepository inventoryLogRepository;
+    private final ProductRepository productRepository;
 
-    @Autowired
-    private InventoryRepository inventoryRepository;
+    public InventoryService(InventoryLogRepository inventoryLogRepository, ProductRepository productRepository) {
+        this.inventoryLogRepository = inventoryLogRepository;
+        this.productRepository = productRepository;
+    }
 
-    @Autowired
-    private ProductRepository productRepository;
-
-    public boolean addToInventory(InventoryDto dto) {
+    @Transactional
+    public InventoryRecordDto recordInventoryTransaction(InventoryDto dto) {
         Product product = productRepository.findById(dto.getProductId())
-                .orElseThrow(() -> new IllegalArgumentException("Product not found with ID: " + dto.getProductId()));
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + dto.getProductId()));
 
-        float incomingQty = dto.getQuantity();
-        int tankCapacity = dto.getTankCapacity();
-        float currentLevel = dto.getCurrentLevel();
-
-        Inventory newInventory = new Inventory();
-        newInventory.setProduct(product);
-        newInventory.setQuantity(incomingQty);
-        newInventory.setTankCapacity(tankCapacity);
-        newInventory.setCurrentLevel(currentLevel);
-
-        // Calculate booking limit as tank capacity - current level
-        float bookingLimit = tankCapacity - currentLevel;
-        newInventory.setBookingLimit(bookingLimit);
-
-        newInventory.setEmployeeId(dto.getEmployeeId());
-        newInventory.setLastUpdated(LocalDateTime.now(IST_ZONE));
-        newInventory.setPrice(dto.getPrice() > 0 ? dto.getPrice() : getDefaultPrice(product.getName()));
-        newInventory.setMetric(dto.getMetric() != null ? dto.getMetric() : "liters");
-
-        inventoryRepository.save(newInventory);
-        return true;
-    }
-
-    public boolean updatePrice(String productName, float newPrice) {
-        Product product = productRepository.findByNameIgnoreCase(productName)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + productName));
-
-        Optional<Inventory> latest = inventoryRepository.findTopByProductOrderByLastUpdatedDesc(product);
-        if (latest.isPresent()) {
-            Inventory previous = latest.get();
-            Inventory updatedEntry = new Inventory();
-            BeanUtils.copyProperties(previous, updatedEntry);
-            updatedEntry.setPrice(newPrice);
-            updatedEntry.setLastPriceUpdated(LocalDateTime.now(IST_ZONE));
-
-            // Recalculate booking limit
-            float bookingLimit = updatedEntry.getTankCapacity() - updatedEntry.getCurrentLevel();
-            updatedEntry.setBookingLimit(bookingLimit);
-
-            updatedEntry.setInventoryID(null);
-            inventoryRepository.save(updatedEntry);
-            return true;
+        if (product.getStatus() != ProductStatus.ACTIVE) {
+            throw new IllegalStateException("Cannot record inventory for an INACTIVE product: " + product.getName());
         }
-        return false;
-    }
 
-    public boolean updateInventory(Long id, InventoryDto dto) {
-        Optional<Inventory> inventoryOpt = inventoryRepository.findById(id);
-        if (inventoryOpt.isPresent()) {
-            Inventory inventory = inventoryOpt.get();
+        Optional<InventoryLog> latestLogOptional = inventoryLogRepository.findTopByProductIdOrderByTransactionDateDesc(product.getId());
 
-            if (dto.getProductId() != null) {
-                Product product = productRepository.findById(dto.getProductId())
-                        .orElseThrow(() -> new IllegalArgumentException("Product not found"));
-                inventory.setProduct(product);
-            }
+        // 2. Determine the previous level. If no log exists, it's the first transaction, so the level is 0.
+        double previousLevel = latestLogOptional
+                .map(InventoryLog::getCurrentLevel) // If a log exists, get its currentLevel
+                .orElse(0.0);                     // Otherwise, default to 0.0
 
-            // Update basic properties
-            if (dto.getQuantity() > 0) inventory.setQuantity(dto.getQuantity());
-            if (dto.getTankCapacity() > 0) inventory.setTankCapacity(dto.getTankCapacity());
-            if (dto.getCurrentLevel() >= 0) inventory.setCurrentLevel(dto.getCurrentLevel());
-            if (dto.getEmployeeId() != null) inventory.setEmployeeId(dto.getEmployeeId());
-            if (dto.getPrice() > 0) inventory.setPrice(dto.getPrice());
-            if (dto.getMetric() != null) inventory.setMetric(dto.getMetric());
+        // 3. Calculate the new level by adding the new quantity.
+        double newCurrentLevel = previousLevel + dto.getQuantity();
 
-            // Recalculate booking limit based on updated values
-            float bookingLimit = inventory.getTankCapacity() - inventory.getCurrentLevel();
-            inventory.setBookingLimit(bookingLimit);
-
-            inventory.setLastUpdated(LocalDateTime.now(IST_ZONE));
-            inventoryRepository.save(inventory);
-            return true;
+        // 4. Add a crucial business rule: check if the new level exceeds the tank's capacity.
+        if (newCurrentLevel > product.getTankCapacity()) {
+            throw new IllegalStateException(
+                    String.format("Adding quantity %.2f would exceed tank capacity of %d for product '%s'. Current level is %.2f.",
+                            dto.getQuantity(),
+                            product.getTankCapacity(),
+                            product.getName(),
+                            previousLevel
+                    )
+            );
         }
-        return false;
+
+        // 5. Create and save the log entry with the *calculated* level.
+        InventoryLog log = new InventoryLog();
+        log.setProduct(product);
+        log.setQuantity(dto.getQuantity());
+        log.setCurrentLevel(newCurrentLevel); // Use the calculated value
+        log.setMetric(dto.getMetric());
+        log.setEmployeeId(dto.getEmployeeId());
+        log.setTransactionDate(LocalDateTime.now());
+
+        InventoryLog savedLog = inventoryLogRepository.save(log);
+        return toRecordDto(savedLog);
     }
 
-    private float getDefaultPrice(String productName) {
-        return switch (productName.toLowerCase()) {
-            case "petrol" -> 104.5f;
-            case "diesel" -> 92.0f;
-            default -> 100.0f;
-        };
+    @Transactional(readOnly = true)
+    public List<InventoryRecordDto> getHistoryForProduct(Long productId) {
+        if (!productRepository.existsById(productId)) {
+            throw new EntityNotFoundException("Product not found with id: " + productId);
+        }
+        return inventoryLogRepository.findByProductIdOrderByTransactionDateDesc(productId)
+                .stream()
+                .map(this::toRecordDto)
+                .collect(Collectors.toList());
+    }
+
+    private InventoryRecordDto toRecordDto(InventoryLog log) {
+        InventoryRecordDto dto = new InventoryRecordDto();
+        dto.setInventoryId(log.getId());
+        dto.setQuantity(log.getQuantity());
+        dto.setCurrentLevel(log.getCurrentLevel());
+        dto.setMetric(log.getMetric());
+        dto.setTransactionDate(log.getTransactionDate());
+        dto.setEmployeeId(log.getEmployeeId());
+
+        if (log.getProduct() != null) {
+            dto.setProductId(log.getProduct().getId());
+            dto.setProductName(log.getProduct().getName());
+        }
+        return dto;
     }
 }
