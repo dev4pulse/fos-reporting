@@ -1,6 +1,7 @@
 package com.fos.reporting.service;
 
 import com.fos.reporting.domain.DocumentDto;
+import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
@@ -12,4 +13,8 @@ public interface DocumentStorageService {
                                String responsibleParty, String notes);
 
     List<DocumentDto> listAllDocuments();
+
+    Resource loadDocumentAsResource(Long documentId);
+
+    void deleteDocument(Long documentId);
 }

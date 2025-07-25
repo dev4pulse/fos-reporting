@@ -1,49 +1,37 @@
 package com.fos.reporting.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
+import lombok.Data;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "documents")
-@Getter
-@Setter
+@Data
 public class Document {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String fileName;
+    // The user-facing filename
+    private String originalFilename;
 
-    // This is "Document Name/Type"
-    @Column(nullable = false)
+    // The unique name of the file in the GCS bucket (e.g., UUID-based)
+    @Column(nullable = false, unique = true)
+    private String blobName;
+
     private String documentType;
-
-    @Column(nullable = false, length = 1024)
-    private String fileUrl;
-
-    // --- New Fields ---
     private String issuingAuthority;
-
     private LocalDate issueDate;
-
-    // This is "Expiration Date" (already exists)
     private LocalDate expiryDate;
-
-    // e.g., 30, 60, 90 days before expiry
     private Integer renewalPeriodDays;
-
     private String responsibleParty;
 
-    @Column(length = 2048) // Increased length for longer notes
+    @Lob // For potentially long notes
     private String notes;
-    // --- End of New Fields ---
 
-    @Column(nullable = false, updatable = false)
+    private Long fileSize;
+    private String contentType;
     private LocalDateTime uploadTimestamp;
+
 }
