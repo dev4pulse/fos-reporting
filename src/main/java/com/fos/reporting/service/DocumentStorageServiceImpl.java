@@ -14,11 +14,13 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -92,6 +94,14 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
         return documentRepository.findAll().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public String generateDownloadUrl(String fileName) {
+        BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, fileName).build();
+        URL signedUrl = storage.signUrl(blobInfo, 1, TimeUnit.MINUTES,
+                Storage.SignUrlOption.withV4Signature());
+        return signedUrl.toString();
     }
 
     private DocumentDto convertToDto(Document document) {

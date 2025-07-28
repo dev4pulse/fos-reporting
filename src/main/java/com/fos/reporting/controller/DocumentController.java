@@ -58,4 +58,9 @@ public class DocumentController {
         List<DocumentDto> documents = documentStorageService.listAllDocuments();
         return ResponseEntity.ok(documents);
     }
+
+    @GetMapping("/{fileName}")
+    public ResponseEntity<String> generateDownloadUrl(@PathVariable String fileName) {
+        return ResponseEntity.ok(documentStorageService.generateDownloadUrl(fileName));
+    }
 }
