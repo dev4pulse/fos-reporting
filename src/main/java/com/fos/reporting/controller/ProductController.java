@@ -24,6 +24,17 @@ public class ProductController {
         return new ResponseEntity<>(savedProduct, HttpStatus.CREATED);
     }
 
+    @PutMapping("/{id}/price")
+    public ResponseEntity<ProductDto> updateProductPrice(
+            @PathVariable Long id,
+            @RequestParam Double newPrice,
+            @RequestParam Long employeeId
+    )
+    {
+        ProductDto updatedProduct = productService.updateProductPrice(id, newPrice);
+        return ResponseEntity.ok(updatedProduct);
+    }
+
     @GetMapping
     public ResponseEntity<List<ProductDto>> getAllProducts() {
         List<ProductDto> products = productService.getAllProducts();

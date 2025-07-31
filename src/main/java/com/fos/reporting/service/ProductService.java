@@ -54,7 +54,7 @@ public class ProductService {
                     existingProduct,
                     newPrice,
                     LocalDateTime.now(),
-                    null // TODO: Pass the logged-in employee's ID here
+                    null // TODO: Replace with logged-in employee's ID
             );
             priceHistoryRepository.save(historyRecord);
         }
@@ -69,6 +69,30 @@ public class ProductService {
 
         Product updatedProduct = productRepository.save(existingProduct);
         return toDto(updatedProduct);
+    }
+
+    @Transactional
+    public ProductDto updateProductPrice(Long id, Double newPriceDouble) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
+
+        BigDecimal newPrice = BigDecimal.valueOf(newPriceDouble);
+        BigDecimal oldPrice = product.getPrice();
+
+        if (oldPrice.compareTo(newPrice) != 0) {
+            ProductPriceHistory history = new ProductPriceHistory(
+                    product,
+                    newPrice,
+                    LocalDateTime.now(),
+                    null // TODO: Replace with logged-in employee's ID
+            );
+            priceHistoryRepository.save(history);
+
+            product.setPrice(newPrice);
+            product = productRepository.save(product);
+        }
+
+        return toDto(product);
     }
 
     @Transactional(readOnly = true)
