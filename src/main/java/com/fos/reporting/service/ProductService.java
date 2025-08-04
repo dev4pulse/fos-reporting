@@ -72,7 +72,7 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductDto updateProductPrice(Long id, Double newPriceDouble) {
+    public ProductDto updateProductPrice(Long id, Double newPriceDouble, Long employeeId) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + id));
 
@@ -84,7 +84,7 @@ public class ProductService {
                     product,
                     newPrice,
                     LocalDateTime.now(),
-                    null // TODO: Replace with logged-in employee's ID
+                    employeeId
             );
             priceHistoryRepository.save(history);
 
@@ -94,6 +94,7 @@ public class ProductService {
 
         return toDto(product);
     }
+
 
     @Transactional(readOnly = true)
     public List<ProductDto> getAllProducts() {

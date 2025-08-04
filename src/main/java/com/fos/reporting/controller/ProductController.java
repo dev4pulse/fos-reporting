@@ -29,9 +29,8 @@ public class ProductController {
             @PathVariable Long id,
             @RequestParam Double newPrice,
             @RequestParam Long employeeId
-    )
-    {
-        ProductDto updatedProduct = productService.updateProductPrice(id, newPrice);
+    ) {
+        ProductDto updatedProduct = productService.updateProductPrice(id, newPrice, employeeId);
         return ResponseEntity.ok(updatedProduct);
     }
 
