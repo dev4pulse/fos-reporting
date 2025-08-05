@@ -6,4 +6,6 @@ import java.util.List;
 public interface ExpenseCategoryService {
     ExpenseCategoryDto createCategory(ExpenseCategoryDto categoryDto);
     List<ExpenseCategoryDto> getAllCategories();
+    void deleteCategory(Long id);
+
 }
