@@ -7,6 +7,7 @@ import com.fos.reporting.repository.DocumentRepository;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,9 +31,9 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
     private final DocumentRepository documentRepository;
     private final String bucketName;
 
-    public DocumentStorageServiceImpl(Storage storage, // Injected by Spring Cloud GCP
-                                      DocumentRepository documentRepository,
-                                      @Value("${gcs.bucket.name}") String bucketName) {
+    public DocumentStorageServiceImpl(@Qualifier("serviceAccountStorage") Storage storage, // Injected by Spring Cloud GCP
+                                  DocumentRepository documentRepository,
+                                  @Value("${gcs.bucket.name}") String bucketName) {
         this.storage = storage;
         this.documentRepository = documentRepository;
         this.bucketName = bucketName;
