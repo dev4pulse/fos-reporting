@@ -7,6 +7,7 @@ import com.fos.reporting.repository.DocumentRepository;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,11 +15,13 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,9 +31,9 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
     private final DocumentRepository documentRepository;
     private final String bucketName;
 
-    public DocumentStorageServiceImpl(Storage storage, // Injected by Spring Cloud GCP
-                                      DocumentRepository documentRepository,
-                                      @Value("${gcs.bucket.name}") String bucketName) {
+    public DocumentStorageServiceImpl(@Qualifier("serviceAccountStorage") Storage storage, // Injected by Spring Cloud GCP
+                                  DocumentRepository documentRepository,
+                                  @Value("${gcs.bucket.name}") String bucketName) {
         this.storage = storage;
         this.documentRepository = documentRepository;
         this.bucketName = bucketName;
@@ -92,6 +95,14 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
         return documentRepository.findAll().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public String generateDownloadUrl(String fileName) {
+        BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, fileName).build();
+        URL signedUrl = storage.signUrl(blobInfo, 1, TimeUnit.MINUTES,
+                Storage.SignUrlOption.withV4Signature());
+        return signedUrl.toString();
     }
 
     private DocumentDto convertToDto(Document document) {

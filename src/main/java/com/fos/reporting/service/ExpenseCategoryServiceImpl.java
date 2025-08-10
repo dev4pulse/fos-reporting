@@ -41,4 +41,13 @@ public class ExpenseCategoryServiceImpl implements ExpenseCategoryService {
         dto.setName(category.getName());
         return dto;
     }
+    @Override
+    @Transactional
+    public void deleteCategory(Long id) {
+        if (!categoryRepository.existsById(id)) {
+            throw new IllegalArgumentException("Category with ID " + id + " does not exist.");
+        }
+        categoryRepository.deleteById(id);
+    }
+
 }

@@ -12,4 +12,6 @@ public interface DocumentStorageService {
                                String responsibleParty, String notes);
 
     List<DocumentDto> listAllDocuments();
+
+    String generateDownloadUrl(String fileName);
 }
