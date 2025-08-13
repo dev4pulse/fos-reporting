@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class Borrower {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "borrower_seq")
+    @SequenceGenerator(name = "borrower_seq", sequenceName = "borrower_seq", allocationSize = 1)
     private Long id;
     private String customerName;
     private String customerVehicle;

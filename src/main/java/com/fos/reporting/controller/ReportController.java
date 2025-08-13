@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -73,5 +74,11 @@ public class ReportController {
     public ResponseEntity<Float> getProductPrice(@RequestParam String productName, @RequestParam String gun) {
         Sales last = salesRepository.findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
         return ResponseEntity.ok((last != null) ? last.getPrice() : 0f);
+    }
+
+    @GetMapping("/sales")
+    public ResponseEntity<List<Sales>> getAllSales() {
+        List<Sales> salesList = salesRepository.findAll();
+        return ResponseEntity.ok(salesList);
     }
 }
