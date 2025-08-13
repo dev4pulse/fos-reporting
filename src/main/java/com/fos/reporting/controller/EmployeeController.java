@@ -34,6 +34,16 @@ public class EmployeeController {
         }
     }
 
+    @GetMapping("/employees")
+    public ResponseEntity<List<Employee>> getAllEmployees() {
+        try {
+            List<Employee> employees = employeeService.getAllEmployees();
+            return ResponseEntity.ok(employees);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDto loginRequest, HttpSession session) {
         System.out.println("request received");
@@ -54,6 +64,20 @@ public class EmployeeController {
                         .body(Map.of("status", "fail", "message", "Invalid credentials"))
         );
     }
+
+    @PutMapping("/employee/{employeeId}/status")
+    public ResponseEntity<String> updateEmployeeStatus(
+            @PathVariable Long employeeId,
+            @RequestParam boolean isActive) {
+        boolean updated = employeeService.updateEmployeeStatus(employeeId, isActive);
+        if (updated) {
+            return ResponseEntity.ok("Status updated successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Employee not found");
+        }
+    }
+
 
 
     @GetMapping("/active")
