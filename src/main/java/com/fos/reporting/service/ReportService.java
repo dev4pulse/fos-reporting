@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -45,7 +46,7 @@ public class ReportService {
                 sales.setProductName(product.getProductName());
                 sales.setGun(product.getGun());
                 sales.setEmployeeId(entryProduct.getEmployeeId());
-
+                sales.setEntryId(entryProduct.getEntryId()); // <-- Add this line
 
                 float opening = product.getOpening() == 0f
                         ? getLastClosing(product.getProductName(), product.getGun())
@@ -69,7 +70,6 @@ public class ReportService {
             }
             return true;
         } catch (Exception e) {
-            // In production, replace with real logging
             e.printStackTrace();
             return false;
         }
@@ -159,5 +159,16 @@ public class ReportService {
                 .filter(s -> productName.equalsIgnoreCase(s.getProductName()))
                 .mapToDouble(Sales::getSalesInRupees)
                 .sum();
+    }
+
+    public List<CollectionsDto> getAllCollections() {
+        List<Collections> collectionsList = collectionsRepository.findAll();
+        List<CollectionsDto> dtoList = new ArrayList<>();
+        for (Collections collections : collectionsList) {
+            CollectionsDto dto = new CollectionsDto();
+            BeanUtils.copyProperties(collections, dto);
+            dtoList.add(dto);
+        }
+        return dtoList;
     }
 }

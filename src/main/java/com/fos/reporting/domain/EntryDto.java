@@ -11,5 +11,5 @@ public class EntryDto {
     private List<Product> products;
     private float cashReceived;
     private float phonePay;
-    private float creditCard;
+    private String entryId;
 }

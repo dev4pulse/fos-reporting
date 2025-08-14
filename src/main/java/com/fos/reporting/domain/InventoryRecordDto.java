@@ -13,4 +13,6 @@ public class InventoryRecordDto {
     private String metric;
     private LocalDateTime transactionDate;
     private Long employeeId;
+    private String entryId;
+
 }

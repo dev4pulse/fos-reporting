@@ -3,6 +3,7 @@ package com.fos.reporting.controller;
 import com.fos.reporting.domain.InventoryDto;
 import com.fos.reporting.domain.InventoryRecordDto;
 import com.fos.reporting.domain.ProductInventoryStatusDto; // Import the new DTO
+import com.fos.reporting.entity.InventoryLog;
 import com.fos.reporting.service.InventoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

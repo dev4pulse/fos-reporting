@@ -26,4 +26,5 @@ public class Collections {
     private double expectedTotal;
     private double receivedTotal;
     private double difference;
+    private String entryId;
 }

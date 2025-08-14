@@ -30,6 +30,7 @@ public class InventoryLog {
 
     @Column(nullable = false)
     private LocalDateTime transactionDate;
-
+    private String entryId;
     private Long employeeId;
+
 }

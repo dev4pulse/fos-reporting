@@ -49,6 +49,16 @@ public class ReportController {
         }
     }
 
+    @GetMapping("/collections")
+    public ResponseEntity<?> getAllCollections() {
+        try {
+            List<CollectionsDto> collectionsList = reportService.getAllCollections();
+            return ResponseEntity.ok(collectionsList);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to fetch collections", "details", e.getMessage()));
+        }
+    }
     @PostMapping("/collections")
     public ResponseEntity<String> addCollections(@RequestBody @Valid CollectionsDto collectionsDto) {
         try {
@@ -60,6 +70,8 @@ public class ReportController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
         }
     }
+
+
 
     @PostMapping("/dashboard-data")
     public ResponseEntity<GetReportResponse> getDashboardData(@RequestBody @Valid GetReportRequest getReportRequest) {
@@ -81,4 +93,5 @@ public class ReportController {
         List<Sales> salesList = salesRepository.findAll();
         return ResponseEntity.ok(salesList);
     }
+
 }

@@ -19,5 +19,6 @@ public class CollectionsDto {
     private float creditCard;
     private float borrowedAmount;
     private float shortCollections;
+    private String entryId;
     private List<BorrowerDto> borrowers;
 }
