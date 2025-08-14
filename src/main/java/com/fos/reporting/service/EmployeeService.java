@@ -39,4 +39,19 @@ public class EmployeeService {
     public Optional<Employee> login(String username, String password) {
         return employeeRepository.findByUsernameAndPassword(username, password);
     }
+
+    public boolean updateEmployeeStatus(Long employeeId, boolean isActive) {
+        Optional<Employee> optionalEmployee = employeeRepository.findById(employeeId);
+        if (optionalEmployee.isPresent()) {
+            Employee employee = optionalEmployee.get();
+            employee.setActive(isActive);
+            employeeRepository.save(employee);
+            return true;
+        }
+        return false;
+    }
+
+    public List<Employee> getAllEmployees() {
+        return employeeRepository.findAll();
+    }
 }
