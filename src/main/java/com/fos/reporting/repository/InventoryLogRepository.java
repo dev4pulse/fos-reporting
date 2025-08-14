@@ -29,4 +29,5 @@ public interface InventoryLogRepository extends JpaRepository<InventoryLog, Long
             ") latest ON il.product_id = latest.product_id AND il.transaction_date = latest.max_date",
             nativeQuery = true)
     List<InventoryLog> findLatestLogForEachProduct();
+    void deleteByEntryId(String entryId);
 }

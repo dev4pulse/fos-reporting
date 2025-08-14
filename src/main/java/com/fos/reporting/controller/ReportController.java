@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 public class ReportController {
@@ -26,9 +27,9 @@ public class ReportController {
     }
 
     @PostMapping("/sales")
-    public ResponseEntity<String> addEntry(@RequestBody @Valid EntryProduct entryProduct) {
+    public ResponseEntity<String> addEntry(@RequestBody @Valid EntrySaleDto entrySaleDto) {
         try {
-            if (reportService.addToSales(entryProduct)) {
+            if (reportService.addToSales(entrySaleDto, UUID.randomUUID().toString())) {
                 return ResponseEntity.ok("added to sales");
             }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
@@ -52,7 +53,7 @@ public class ReportController {
     @PostMapping("/collections")
     public ResponseEntity<String> addCollections(@RequestBody @Valid CollectionsDto collectionsDto) {
         try {
-            if (reportService.addToCollections(collectionsDto)) {
+            if (reportService.addToCollections(collectionsDto, UUID.randomUUID().toString())) {
                 return ResponseEntity.ok("added to collections");
             }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
@@ -80,5 +81,32 @@ public class ReportController {
     public ResponseEntity<List<Sales>> getAllSales() {
         List<Sales> salesList = salesRepository.findAll();
         return ResponseEntity.ok(salesList);
+    }
+
+    @GetMapping("/recentSales")
+    public ResponseEntity<List<Sales>> getRecentSales() {
+        List<Sales> salesList = reportService.getRecentSales();
+        return ResponseEntity.ok(salesList);
+    }
+
+    @DeleteMapping("/entry/{id}")
+    public ResponseEntity<String> deleteByEntryId(@PathVariable String entryId) {
+        try {
+            reportService.deleteById(entryId);
+            return ResponseEntity.ok("Sale deleted successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete sale");
+        }
+    }
+    @PostMapping("/entryData")
+    public ResponseEntity<String> addEntryData(@RequestBody @Valid EntryData entryData) {
+        try {
+            if (reportService.addData(entryData)) {
+                return ResponseEntity.ok("added data to sales collections and inventory");
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
+        }
     }
 }
