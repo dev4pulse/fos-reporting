@@ -30,5 +30,5 @@ public interface InventoryLogRepository extends JpaRepository<InventoryLog, Long
             nativeQuery = true)
     List<InventoryLog> findLatestLogForEachProduct();
 
-
+    List<InventoryLog> findAllByOrderByTransactionDateDesc();
 }

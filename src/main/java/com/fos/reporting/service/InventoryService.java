@@ -103,6 +103,15 @@ public class InventoryService {
                 .map(this::toRecordDto)
                 .collect(Collectors.toList());
     }
+    @Transactional(readOnly = true)
+    public List<InventoryRecordDto> getAllInventoryHistory() {
+        // This is more consistent and safer than returning the raw entity list.
+        // It assumes InventoryLogRepository has a method `findAllByOrderByTransactionDateDesc()`
+        return inventoryLogRepository.findAllByOrderByTransactionDateDesc()
+                .stream()
+                .map(this::toRecordDto)
+                .collect(Collectors.toList());
+    }
 
     private InventoryRecordDto toRecordDto(InventoryLog log) {
         InventoryRecordDto dto = new InventoryRecordDto();
@@ -118,9 +127,6 @@ public class InventoryService {
             dto.setProductName(log.getProduct().getName());
         }
         return dto;
-    }
-    public List<InventoryLog> getAllInventoryLogs() {
-        return inventoryLogRepository.findAll();
     }
 
 }

@@ -43,4 +43,10 @@ public class InventoryController {
         List<InventoryRecordDto> history = inventoryService.getHistoryForProduct(productId);
         return ResponseEntity.ok(history);
     }
+
+    @GetMapping("/inventory")
+    public ResponseEntity<List<InventoryRecordDto>> getAllHistory() {
+        List<InventoryRecordDto> fullHistory = inventoryService.getAllInventoryHistory();
+        return ResponseEntity.ok(fullHistory);
+    }
 }
