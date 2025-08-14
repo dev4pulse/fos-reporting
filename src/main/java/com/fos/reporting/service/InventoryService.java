@@ -56,6 +56,7 @@ public class InventoryService {
         }).collect(Collectors.toList());
     }
 
+    // src/main/java/com/fos/reporting/service/InventoryService.java
     @Transactional
     public InventoryRecordDto recordInventoryTransaction(InventoryDto dto) {
         Product product = productRepository.findById(dto.getProductId())
@@ -66,16 +67,9 @@ public class InventoryService {
         }
 
         Optional<InventoryLog> latestLogOptional = inventoryLogRepository.findTopByProductIdOrderByTransactionDateDesc(product.getId());
-
-        // 2. Determine the previous level. If no log exists, it's the first transaction, so the level is 0.
-        double previousLevel = latestLogOptional
-                .map(InventoryLog::getCurrentLevel) // If a log exists, get its currentLevel
-                .orElse(0.0);                     // Otherwise, default to 0.0
-
-        // 3. Calculate the new level by adding the new quantity.
+        double previousLevel = latestLogOptional.map(InventoryLog::getCurrentLevel).orElse(0.0);
         double newCurrentLevel = previousLevel + dto.getQuantity();
 
-        // 4. Add a crucial business rule: check if the new level exceeds the tank's capacity.
         if (newCurrentLevel > product.getTankCapacity()) {
             throw new IllegalStateException(
                     String.format("Adding quantity %.2f would exceed tank capacity of %d for product '%s'. Current level is %.2f.",
@@ -87,25 +81,33 @@ public class InventoryService {
             );
         }
 
-        // 5. Create and save the log entry with the *calculated* level.
         InventoryLog log = new InventoryLog();
         log.setProduct(product);
         log.setQuantity(dto.getQuantity());
-        log.setCurrentLevel(newCurrentLevel); // Use the calculated value
+        log.setCurrentLevel(newCurrentLevel);
         log.setMetric(dto.getMetric());
         log.setEmployeeId(dto.getEmployeeId());
         log.setTransactionDate(LocalDateTime.now());
+        log.setEntryId(dto.getEntryId()); // <-- Add this line
 
         InventoryLog savedLog = inventoryLogRepository.save(log);
         return toRecordDto(savedLog);
     }
-
     @Transactional(readOnly = true)
     public List<InventoryRecordDto> getHistoryForProduct(Long productId) {
         if (!productRepository.existsById(productId)) {
             throw new EntityNotFoundException("Product not found with id: " + productId);
         }
         return inventoryLogRepository.findByProductIdOrderByTransactionDateDesc(productId)
+                .stream()
+                .map(this::toRecordDto)
+                .collect(Collectors.toList());
+    }
+    @Transactional(readOnly = true)
+    public List<InventoryRecordDto> getAllInventoryHistory() {
+        // This is more consistent and safer than returning the raw entity list.
+        // It assumes InventoryLogRepository has a method `findAllByOrderByTransactionDateDesc()`
+        return inventoryLogRepository.findAllByOrderByTransactionDateDesc()
                 .stream()
                 .map(this::toRecordDto)
                 .collect(Collectors.toList());
@@ -126,4 +128,5 @@ public class InventoryService {
         }
         return dto;
     }
+
 }

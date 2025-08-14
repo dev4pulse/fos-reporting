@@ -18,4 +18,6 @@ public class InventoryDto {
 
     @NotBlank(message = "Metric (unit of measurement) cannot be blank.")
     private String metric;
+    private String entryId;
+
 }
