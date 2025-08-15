@@ -11,6 +11,7 @@ import com.fos.reporting.repository.SalesRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -174,6 +175,8 @@ public class ReportService {
                 .mapToDouble(Sales::getSalesInRupees)
                 .sum();
     }
+
+    @Transactional
     public void deleteById(String entryId){
         try {
             salesRepository.deleteByEntryId(entryId);

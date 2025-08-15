@@ -89,7 +89,7 @@ public class ReportController {
         return ResponseEntity.ok(salesList);
     }
 
-    @DeleteMapping("/entry/{id}")
+    @DeleteMapping("/entry/{entryId}")
     public ResponseEntity<String> deleteByEntryId(@PathVariable String entryId) {
         try {
             reportService.deleteById(entryId);
