@@ -31,4 +31,5 @@ public class Sales {
     private float price;
     @Column(name = "sales_in_rupees")
     private float salesInRupees;
+    private String entryId;
 }

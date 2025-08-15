@@ -6,15 +6,19 @@ import com.fos.reporting.entity.Collections;
 import com.fos.reporting.entity.Sales;
 import com.fos.reporting.repository.BorrowerRepository;
 import com.fos.reporting.repository.CollectionsRepository;
+import com.fos.reporting.repository.InventoryLogRepository;
 import com.fos.reporting.repository.SalesRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ReportService {
@@ -30,21 +34,27 @@ public class ReportService {
     @Autowired
     private BorrowerRepository borrowerRepository;
 
+    @Autowired
+    private InventoryService inventoryService;
+    @Autowired
+    private InventoryLogRepository inventoryLogRepository;
+
     public float getLastClosing(String productName, String gun) {
         Sales last = salesRepository.findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
         return (last != null) ? last.getClosingStock() : 0f;
     }
 
-    public boolean addToSales(EntryProduct entryProduct) {
+    public boolean addToSales(EntrySaleDto entrySaleDto, String entryId) {
         try {
-            LocalDateTime entryDateTime = LocalDateTime.parse(entryProduct.getDate(), FORMATTER);
+            LocalDateTime entryDateTime = LocalDateTime.parse(entrySaleDto.getDate(), FORMATTER);
 
-            for (Product product : entryProduct.getProducts()) {
+            for (Product product : entrySaleDto.getProducts()) {
                 Sales sales = new Sales();
                 sales.setDateTime(entryDateTime);
                 sales.setProductName(product.getProductName());
                 sales.setGun(product.getGun());
-                sales.setEmployeeId(entryProduct.getEmployeeId());
+                sales.setEmployeeId(entrySaleDto.getEmployeeId());
+                sales.setEntryId(entryId);
 
 
                 float opening = product.getOpening() == 0f
@@ -75,7 +85,7 @@ public class ReportService {
         }
     }
 
-    public boolean addToCollections(CollectionsDto dto) {
+    public boolean addToCollections(CollectionsDto dto, String entryId) {
         try {
             LocalDateTime dateTime = LocalDateTime.parse(dto.getDate(), FORMATTER);
             Collections collections = new Collections();
@@ -94,6 +104,7 @@ public class ReportService {
             collections.setExpectedTotal(expected);
             collections.setReceivedTotal(received);
             collections.setDifference(expected - received);
+            collections.setEntryId(entryId);
 
             Collections saved = collectionsRepository.save(collections);
 
@@ -146,6 +157,10 @@ public class ReportService {
         return response;
     }
 
+    public List<Sales> getRecentSales() {
+        return salesRepository.findTop10ByOrderByDateTimeDesc();
+    }
+
     private static double getSalesVolume(List<Sales> sales, String productName) {
         return sales.stream()
                 .filter(s -> productName.equalsIgnoreCase(s.getProductName()))
@@ -159,5 +174,25 @@ public class ReportService {
                 .filter(s -> productName.equalsIgnoreCase(s.getProductName()))
                 .mapToDouble(Sales::getSalesInRupees)
                 .sum();
+    }
+
+    @Transactional
+    public void deleteById(String entryId){
+        try {
+            salesRepository.deleteByEntryId(entryId);
+            collectionsRepository.deleteByEntryId(entryId);
+            inventoryLogRepository.deleteByEntryId(entryId);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to delete data with entryId: " + entryId, e);
+        }
+    }
+    public boolean addData(EntryData entryData) {
+        String entryId = UUID.randomUUID().toString();
+        this.addToSales(entryData.getEntrySaleDto(), entryId);
+        this.addToCollections(entryData.getCollectionsDto(), entryId);
+        inventoryService.recordInventoryTransaction(entryData.getInventoryDto(), entryId);
+        return true;
     }
 }

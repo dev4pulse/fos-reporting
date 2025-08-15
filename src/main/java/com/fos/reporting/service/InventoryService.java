@@ -57,7 +57,7 @@ public class InventoryService {
     }
 
     @Transactional
-    public InventoryRecordDto recordInventoryTransaction(InventoryDto dto) {
+    public InventoryRecordDto recordInventoryTransaction(InventoryDto dto, String entryId) {
         Product product = productRepository.findById(dto.getProductId())
                 .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + dto.getProductId()));
 
@@ -95,6 +95,7 @@ public class InventoryService {
         log.setMetric(dto.getMetric());
         log.setEmployeeId(dto.getEmployeeId());
         log.setTransactionDate(LocalDateTime.now());
+        log.setEntryId(entryId);
 
         InventoryLog savedLog = inventoryLogRepository.save(log);
         return toRecordDto(savedLog);

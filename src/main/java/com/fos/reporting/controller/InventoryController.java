@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/inventory") // ✅ Standardized path
@@ -33,7 +34,7 @@ public class InventoryController {
 
     @PostMapping
     public ResponseEntity<InventoryRecordDto> recordTransaction(@Valid @RequestBody InventoryDto inventoryDto) {
-        InventoryRecordDto savedRecord = inventoryService.recordInventoryTransaction(inventoryDto);
+        InventoryRecordDto savedRecord = inventoryService.recordInventoryTransaction(inventoryDto, UUID.randomUUID().toString());
         return new ResponseEntity<>(savedRecord, HttpStatus.CREATED);
     }
 
