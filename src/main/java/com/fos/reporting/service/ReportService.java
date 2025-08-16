@@ -242,6 +242,8 @@ public class ReportService {
             p.setOpening(sale.getOpeningStock());
             p.setClosing(sale.getClosingStock());
             p.setTesting(sale.getTestingTotal());
+            p.setSaleInLiters(sale.getSalesInLiters());
+            p.setSalesInRupees(sale.getSalesInRupees());
             return p;
         }).collect(Collectors.toList());
         dto.setProducts(products);
