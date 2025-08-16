@@ -1,10 +1,8 @@
 package com.fos.reporting.service;
 
 import com.fos.reporting.domain.*;
-import com.fos.reporting.entity.Borrower;
 import com.fos.reporting.entity.Collections;
 import com.fos.reporting.entity.Sales;
-import com.fos.reporting.repository.BorrowerRepository;
 import com.fos.reporting.repository.CollectionsRepository;
 import com.fos.reporting.repository.InventoryLogRepository;
 import com.fos.reporting.repository.SalesRepository;
@@ -30,9 +28,6 @@ public class ReportService {
 
     @Autowired
     private CollectionsRepository collectionsRepository;
-
-    @Autowired
-    private BorrowerRepository borrowerRepository;
 
     @Autowired
     private InventoryService inventoryService;
@@ -98,8 +93,7 @@ public class ReportService {
 
             double received = dto.getCashReceived()
                     + dto.getPhonePay()
-                    + dto.getCreditCard()
-                    + dto.getBorrowedAmount();
+                    + dto.getCreditCard();
 
             collections.setExpectedTotal(expected);
             collections.setReceivedTotal(received);
@@ -108,15 +102,6 @@ public class ReportService {
 
             Collections saved = collectionsRepository.save(collections);
 
-            if (dto.getBorrowers() != null) {
-                for (BorrowerDto b : dto.getBorrowers()) {
-                    Borrower borrower = new Borrower();
-                    BeanUtils.copyProperties(b, borrower);
-                    borrower.setCollection(saved); // Link to parent collection
-                    borrowerRepository.save(borrower);
-                }
-
-            }
             return saved.getId() != null && saved.getId() > 0;
         } catch (Exception e) {
             e.printStackTrace();
