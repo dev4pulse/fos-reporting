@@ -100,12 +100,12 @@ public class ReportController {
     }
 
     @GetMapping("/recent-entries")
-    public ResponseEntity<?> getRecentEntries() {
+    public ResponseEntity<List<RecentData>> getRecentEntries() {
         try {
-            List<EntryData> recentEntries = reportService.getRecentEntries();
+            List<RecentData> recentEntries = reportService.getRecentEntries();
             return ResponseEntity.ok(recentEntries);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
