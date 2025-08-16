@@ -98,6 +98,17 @@ public class ReportController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete sale");
         }
     }
+
+    @GetMapping("/recent-entries")
+    public ResponseEntity<List<RecentData>> getRecentEntries() {
+        try {
+            List<RecentData> recentEntries = reportService.getRecentEntries();
+            return ResponseEntity.ok(recentEntries);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     @PostMapping("/entryData")
     public ResponseEntity<String> addEntryData(@RequestBody @Valid EntryData entryData) {
         try {

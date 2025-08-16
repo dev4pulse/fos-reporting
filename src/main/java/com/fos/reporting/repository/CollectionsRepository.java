@@ -11,4 +11,5 @@ import java.util.List;
 public interface CollectionsRepository extends JpaRepository<Collections, Long> {
     List<Collections> findByDateTimeBetween(LocalDateTime fromDate, LocalDateTime toDate);
     void deleteByEntryId(String entryId);
+    List<Collections> findByEntryId(String entryId);
 }
