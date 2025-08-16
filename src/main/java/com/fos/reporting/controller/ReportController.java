@@ -98,6 +98,17 @@ public class ReportController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete sale");
         }
     }
+
+    @GetMapping("/entry/{entryId}")
+    public ResponseEntity<?> getEntryDataById(@PathVariable String entryId) {
+        try {
+            EntryData entryData = reportService.getEntryById(entryId);
+            return ResponseEntity.ok(entryData);
+        } catch (Exception e) { // Ideally, you would catch a specific ResourceNotFoundException from the service
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/entryData")
     public ResponseEntity<String> addEntryData(@RequestBody @Valid EntryData entryData) {
         try {

@@ -30,4 +30,5 @@ public interface InventoryLogRepository extends JpaRepository<InventoryLog, Long
             nativeQuery = true)
     List<InventoryLog> findLatestLogForEachProduct();
     void deleteByEntryId(String entryId);
+    List<InventoryLog> findByEntryId(String entryId);
 }

@@ -17,4 +17,5 @@ public interface SalesRepository extends JpaRepository<Sales, Long> {
     List<Sales> findByDateTimeBetween(LocalDateTime fromDate, LocalDateTime toDate);
     List<Sales> findTop10ByOrderByDateTimeDesc();
     void deleteByEntryId(String entryId);
+    List<Sales> findByEntryId(String entryId);
 }

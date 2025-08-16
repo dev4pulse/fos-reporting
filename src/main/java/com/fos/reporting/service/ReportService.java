@@ -17,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ReportService {
@@ -179,5 +180,64 @@ public class ReportService {
         this.addToCollections(entryData.getCollectionsDto(), entryId);
         inventoryService.recordInventoryTransaction(entryData.getInventoryDto(), entryId);
         return true;
+    }
+    public EntryData getEntryById(String entryId) {
+        // Fetch all related entities from the database
+        List<Sales> salesList = salesRepository.findByEntryId(entryId);
+        List<Collections> collectionsList = collectionsRepository.findByEntryId(entryId);
+
+        // If there are no sales, the entry doesn't exist.
+        if (salesList.isEmpty()) {
+            throw new RuntimeException("No entry found with entryId: " + entryId);
+        }
+
+        // Map entities to DTOs
+        EntrySaleDto entrySaleDto = mapSalesToDto(salesList);
+
+        CollectionsDto collectionsDto = null;
+        if (collectionsList != null && !collectionsList.isEmpty()) {
+            // Assuming we only want the first result for a given entryId
+            Collections firstCollection = collectionsList.get(0);
+            collectionsDto = this.mapCollectionsToDto(firstCollection);
+        }
+        // Assemble the final EntryData object
+        EntryData entryData = new EntryData();
+        entryData.setEntrySaleDto(entrySaleDto);
+        entryData.setCollectionsDto(collectionsDto);
+
+        // Note: The current design has one inventory log per entry. This is a simplification.
+        // A more robust design would have one inventory log per product sold.
+        inventoryLogRepository.findByEntryId(entryId).stream().findFirst().ifPresent(log -> {
+            InventoryDto inventoryDto = new InventoryDto();
+            BeanUtils.copyProperties(log, inventoryDto);
+            inventoryDto.setProductId(log.getProduct().getId());
+            entryData.setInventoryDto(inventoryDto);
+        });
+
+        return entryData;
+    }
+    private EntrySaleDto mapSalesToDto(List<Sales> salesList) {
+        EntrySaleDto dto = new EntrySaleDto();
+        Sales firstSale = salesList.get(0);
+        dto.setDate(firstSale.getDateTime().format(FORMATTER));
+        dto.setEmployeeId(firstSale.getEmployeeId());
+
+        List<Product> products = salesList.stream().map(sale -> {
+            Product p = new Product();
+            BeanUtils.copyProperties(sale, p);
+            p.setPrice(sale.getPrice());
+            p.setOpening(sale.getOpeningStock());
+            p.setClosing(sale.getClosingStock());
+            p.setTesting(sale.getTestingTotal());
+            return p;
+        }).collect(Collectors.toList());
+        dto.setProducts(products);
+        return dto;
+    }
+    private CollectionsDto mapCollectionsToDto(Collections collections) {
+        CollectionsDto dto = new CollectionsDto();
+        BeanUtils.copyProperties(collections, dto);
+        dto.setDate(collections.getDateTime().format(FORMATTER));
+        return dto;
     }
 }
