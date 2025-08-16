@@ -216,6 +216,19 @@ public class ReportService {
 
         return entryData;
     }
+
+    public List<EntryData> getRecentEntries() {
+        LocalDateTime sinceDate = LocalDateTime.now().minusDays(10);
+
+        // 1. Find all unique entry IDs in the last 10 days.
+        List<String> recentEntryIds = salesRepository.findDistinctEntryIdsByDateTimeAfter(sinceDate);
+
+        // 2. For each ID, get the full EntryData and collect it into a list.
+        return recentEntryIds.stream()
+                .map(this::getEntryById) // Re-use our existing logic!
+                .collect(Collectors.toList());
+    }
+
     private EntrySaleDto mapSalesToDto(List<Sales> salesList) {
         EntrySaleDto dto = new EntrySaleDto();
         Sales firstSale = salesList.get(0);

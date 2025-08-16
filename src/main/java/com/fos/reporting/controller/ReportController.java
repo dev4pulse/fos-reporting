@@ -99,13 +99,13 @@ public class ReportController {
         }
     }
 
-    @GetMapping("/entry/{entryId}")
-    public ResponseEntity<?> getEntryDataById(@PathVariable String entryId) {
+    @GetMapping("/recent-entries")
+    public ResponseEntity<?> getRecentEntries() {
         try {
-            EntryData entryData = reportService.getEntryById(entryId);
-            return ResponseEntity.ok(entryData);
-        } catch (Exception e) { // Ideally, you would catch a specific ResourceNotFoundException from the service
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+            List<EntryData> recentEntries = reportService.getRecentEntries();
+            return ResponseEntity.ok(recentEntries);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
         }
     }
 
