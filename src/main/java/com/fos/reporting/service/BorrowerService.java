@@ -2,8 +2,10 @@ package com.fos.reporting.service;
 
 import com.fos.reporting.domain.BorrowerDto;
 import com.fos.reporting.entity.Borrower;
+import com.fos.reporting.repository.BorrowerHistoryRepository;
 import com.fos.reporting.repository.BorrowerRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -13,13 +15,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+
 public class BorrowerService {
 
-    private final BorrowerRepository borrowerRepository;
 
-    // Use constructor injection - it's safer and better for testing.
-    public BorrowerService(BorrowerRepository borrowerRepository) {
+    private final BorrowerRepository borrowerRepository;
+    private final BorrowerHistoryService historyService;
+    private final BorrowerHistoryRepository historyRepository;
+
+    public BorrowerService(BorrowerRepository borrowerRepository, BorrowerHistoryService historyService,BorrowerHistoryRepository historyRepository) {
         this.borrowerRepository = borrowerRepository;
+        this.historyService = historyService;
+        this.historyRepository=historyRepository;
     }
 
     @Transactional
@@ -27,7 +34,6 @@ public class BorrowerService {
         if (dto.getBorrowDate() == null) {
             dto.setBorrowDate(LocalDateTime.now());
         }
-
         Borrower borrower = toEntity(dto);
         Borrower savedBorrower = borrowerRepository.save(borrower);
         return toDto(savedBorrower);
@@ -38,12 +44,16 @@ public class BorrowerService {
         Borrower existingBorrower = borrowerRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Borrower not found with id: " + id));
 
+
+        historyService.saveHistory(existingBorrower, dto.getDuePaid(), dto.getExtraBorrowed());
+
         // Update properties from the DTO
         updateEntityFromDto(existingBorrower, dto);
 
         Borrower updatedBorrower = borrowerRepository.save(existingBorrower);
         return toDto(updatedBorrower);
     }
+
 
     @Transactional(readOnly = true)
     public List<BorrowerDto> findBorrowers(String customerName) {
@@ -98,4 +108,20 @@ public class BorrowerService {
         entity.setPhone(dto.getPhone());
         entity.setEmail(dto.getEmail());
     }
+
+
+    @Transactional
+    public void deleteBorrower(Long id) {
+        Borrower borrower = borrowerRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Borrower not found with id: " + id));
+
+        // Step 1: Delete borrower history
+        historyRepository.deleteAll(
+                historyRepository.findByBorrowerOrderByUpdatedAtDesc(borrower)
+        );
+
+        // Step 2: Delete borrower
+        borrowerRepository.delete(borrower);
+    }
+
 }

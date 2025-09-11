@@ -50,4 +50,11 @@ public class BorrowerController {
         BorrowerDto updatedBorrower = borrowerService.updateBorrower(id, borrowerDto);
         return ResponseEntity.ok(updatedBorrower);
     }
+
+    @DeleteMapping("/remove/{id}")
+    public ResponseEntity<Void> deleteBorrower(@PathVariable Long id) {
+        borrowerService.deleteBorrower(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }
