@@ -1,17 +1,23 @@
 package com.fos.reporting.service;
+
 import com.fos.reporting.domain.BorrowerHistoryDto;
 import com.fos.reporting.entity.Borrower;
 import com.fos.reporting.entity.BorrowerHistory;
 import com.fos.reporting.repository.BorrowerHistoryRepository;
 import com.fos.reporting.repository.BorrowerRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class BorrowerHistoryService {
+
+    private static final Logger log = LoggerFactory.getLogger(BorrowerHistoryService.class);
 
     private final BorrowerHistoryRepository historyRepository;
     private final BorrowerRepository borrowerRepository;
@@ -22,71 +28,87 @@ public class BorrowerHistoryService {
         this.borrowerRepository = borrowerRepository;
     }
 
-
-    //Save borrower history for any transaction (borrow, due paid, extra borrow)
-
+    // Save borrower history for any transaction (borrow, due paid, extra borrow)
     public void saveHistory(Borrower borrower, Double duePaid, Double extraBorrowed) {
-        BorrowerHistory history = new BorrowerHistory();
-        history.setBorrower(borrower);
-        history.setCustomerName(borrower.getCustomerName());
-        history.setCustomerVehicle(borrower.getCustomerVehicle());
-        history.setEmployeeId(borrower.getEmployeeId());
-        history.setAmountBorrowed(borrower.getAmountBorrowed());
-        history.setBorrowDate(borrower.getBorrowDate());
-        history.setDueDate(borrower.getDueDate());
-        history.setStatus(borrower.getStatus());
-        history.setPhone(borrower.getPhone());
-        history.setDuePaid(duePaid);
-        history.setExtraBorrowed(extraBorrowed);
-        history.setUpdatedAt(LocalDateTime.now());
+        try {
+            BorrowerHistory history = new BorrowerHistory();
+            history.setBorrower(borrower);
+            history.setCustomerName(borrower.getCustomerName());
+            history.setCustomerVehicle(borrower.getCustomerVehicle());
+            history.setEmployeeId(borrower.getEmployeeId());
+            history.setAmountBorrowed(borrower.getAmountBorrowed());
+            history.setBorrowDate(borrower.getBorrowDate());
+            history.setDueDate(borrower.getDueDate());
+            history.setStatus(borrower.getStatus());
+            history.setPhone(borrower.getPhone());
+            history.setDuePaid(duePaid);
+            history.setExtraBorrowed(extraBorrowed);
+            history.setUpdatedAt(LocalDateTime.now());
 
-        // ✅ Always calculate remaining consistently
-        history.setRemainingAmount(calculateRemaining(
-                borrower.getAmountBorrowed(),
-                extraBorrowed,
-                duePaid
-        ));
+            // Always calculate remaining consistently
+            history.setRemainingAmount(calculateRemaining(
+                    borrower.getAmountBorrowed(),
+                    extraBorrowed,
+                    duePaid
+            ));
 
-        historyRepository.save(history);
+            historyRepository.save(history);
+            log.info("Saved borrower history for borrower ID {}", borrower.getId());
+        } catch (Exception e) {
+            log.error("Error saving borrower history for borrower ID {}", borrower.getId(), e);
+        }
     }
 
-    //Get borrower history by borrower ID.
-
+    // Get borrower history by borrower ID
     public List<BorrowerHistoryDto> getHistory(Long borrowerId) {
-        Borrower borrower = borrowerRepository.findById(borrowerId)
-                .orElseThrow(() -> new IllegalArgumentException("Borrower not found with id: " + borrowerId));
+        try {
+            Borrower borrower = borrowerRepository.findById(borrowerId)
+                    .orElseThrow(() -> new IllegalArgumentException("Borrower not found with id: " + borrowerId));
 
-        return historyRepository.findByBorrowerOrderByUpdatedAtDesc(borrower)
-                .stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+            List<BorrowerHistoryDto> historyList = historyRepository.findByBorrowerOrderByUpdatedAtDesc(borrower)
+                    .stream()
+                    .map(this::mapToDto)
+                    .collect(Collectors.toList());
+            log.info("Fetched {} history records for borrower ID {}", historyList.size(), borrowerId);
+            return historyList;
+        } catch (Exception e) {
+            log.error("Error fetching history for borrower ID {}", borrowerId, e);
+            throw e;
+        }
     }
 
-    /**
-     * Search borrower history by customer name.
-     */
+    // Search borrower history by customer name
     public List<BorrowerHistoryDto> getHistoryByCustomerName(String customerName) {
-        return historyRepository.findByCustomerNameContainingIgnoreCaseOrderByUpdatedAtDesc(customerName)
-                .stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+        try {
+            List<BorrowerHistoryDto> historyList = historyRepository
+                    .findByCustomerNameContainingIgnoreCaseOrderByUpdatedAtDesc(customerName)
+                    .stream()
+                    .map(this::mapToDto)
+                    .collect(Collectors.toList());
+            log.info("Fetched {} history records for customer name '{}'", historyList.size(), customerName);
+            return historyList;
+        } catch (Exception e) {
+            log.error("Error fetching history for customer name '{}'", customerName, e);
+            throw e;
+        }
     }
 
-    /**
-     * Get all borrower history records.
-     */
+    // Get all borrower history records
     public List<BorrowerHistoryDto> getAllBorrowersHistory() {
-        return historyRepository.findAll()
-                .stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+        try {
+            List<BorrowerHistoryDto> allHistory = historyRepository.findAll()
+                    .stream()
+                    .map(this::mapToDto)
+                    .collect(Collectors.toList());
+            log.info("Fetched all borrower history records: {}", allHistory.size());
+            return allHistory;
+        } catch (Exception e) {
+            log.error("Error fetching all borrower history records", e);
+            throw e;
+        }
     }
 
-    //  Private helper methods
-
-    /**
-     * Consistent formula to calculate remaining amount.
-     */
+    // Private helper methods
     private double calculateRemaining(Double amountBorrowed, Double extraBorrowed, Double duePaid) {
         double borrowed = (amountBorrowed != null ? amountBorrowed : 0.0);
         double extra = (extraBorrowed != null ? extraBorrowed : 0.0);
@@ -94,9 +116,6 @@ public class BorrowerHistoryService {
         return borrowed + extra - paid;
     }
 
-    /**
-     * Convert Entity -> DTO
-     */
     private BorrowerHistoryDto mapToDto(BorrowerHistory h) {
         BorrowerHistoryDto dto = new BorrowerHistoryDto();
         dto.setId(h.getId());
