@@ -5,119 +5,157 @@ import com.fos.reporting.entity.Sales;
 import com.fos.reporting.repository.SalesRepository;
 import com.fos.reporting.service.ReportService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @RestController
+@RequestMapping("/sales")
 public class ReportController {
 
     @Autowired
     private ReportService reportService;
+
     @Autowired
     private SalesRepository salesRepository;
 
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     @GetMapping("/test")
     public ResponseEntity<String> ping() {
+        log.info("Ping request received");
         return ResponseEntity.ok("test from report service");
     }
 
     @PostMapping("/sales")
     public ResponseEntity<String> addEntry(@RequestBody @Valid EntrySaleDto entrySaleDto) {
+        log.info("Add Sale request received: {}", entrySaleDto);
         try {
-            if (reportService.addToSales(entrySaleDto, UUID.randomUUID().toString())) {
+            boolean added = reportService.addToSales(entrySaleDto, UUID.randomUUID().toString());
+            if (added) {
+                log.info("Sale added successfully: {}", entrySaleDto);
                 return ResponseEntity.ok("added to sales");
+            } else {
+                log.error("Failed to add sale: {}", entrySaleDto);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to add sale");
             }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
+            log.error("Exception in addEntry: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to add sale due to exception");
         }
     }
 
     @GetMapping("/sales/last")
     public ResponseEntity<?> getLastClosing(@RequestParam String productName, @RequestParam String gun) {
+        log.info("Get last closing request for product: {} and gun: {}", productName, gun);
         try {
             float last = reportService.getLastClosing(productName, gun);
             return ResponseEntity.ok(Map.of("lastClosing", last));
         } catch (IllegalArgumentException e) {
+            log.warn("Invalid request: {}", e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Something went wrong"));
+            log.error("Error getting last closing: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Something went wrong"));
         }
     }
 
     @PostMapping("/collections")
     public ResponseEntity<String> addCollections(@RequestBody @Valid CollectionsDto collectionsDto) {
+        log.info("Add collections request: {}", collectionsDto);
         try {
-            if (reportService.addToCollections(collectionsDto, UUID.randomUUID().toString())) {
+            boolean added = reportService.addToCollections(collectionsDto, UUID.randomUUID().toString());
+            if (added) {
+                log.info("Collections added successfully: {}", collectionsDto);
                 return ResponseEntity.ok("added to collections");
+            } else {
+                log.error("Failed to add collections: {}", collectionsDto);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to add collections");
             }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
+            log.error("Exception in addCollections: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to add collections due to exception");
         }
     }
 
     @PostMapping("/dashboard-data")
     public ResponseEntity<GetReportResponse> getDashboardData(@RequestBody @Valid GetReportRequest getReportRequest) {
+        log.info("Dashboard data request received: {}", getReportRequest);
         try {
-            return ResponseEntity.ok(reportService.getDashboard(getReportRequest));
+            GetReportResponse response = reportService.getDashboard(getReportRequest);
+            log.info("Dashboard data retrieved successfully");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
+            log.error("Exception in getDashboardData: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     @GetMapping("/sales/price")
     public ResponseEntity<Float> getProductPrice(@RequestParam String productName, @RequestParam String gun) {
-        Sales last = salesRepository.findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
-        return ResponseEntity.ok((last != null) ? last.getPrice() : 0f);
-    }
-
-    @GetMapping("/sales")
-    public ResponseEntity<List<Sales>> getAllSales() {
-        List<Sales> salesList = salesRepository.findAll();
-        return ResponseEntity.ok(salesList);
-    }
-
-    @GetMapping("/recentSales")
-    public ResponseEntity<List<Sales>> getRecentSales() {
-        List<Sales> salesList = reportService.getRecentSales();
-        return ResponseEntity.ok(salesList);
-    }
-
-    @DeleteMapping("/entry/{entryId}")
-    public ResponseEntity<String> deleteByEntryId(@PathVariable String entryId) {
+        log.info("Get product price request for product: {} gun: {}", productName, gun);
         try {
-            reportService.deleteById(entryId);
-            return ResponseEntity.ok("Sale deleted successfully");
+            Sales last = salesRepository.findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
+            float price = (last != null) ? last.getPrice() : 0f;
+            log.info("Product price: {}", price);
+            return ResponseEntity.ok(price);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to delete sale");
-        }
-    }
-
-    @GetMapping("/recent-entries")
-    public ResponseEntity<List<RecentData>> getRecentEntries() {
-        try {
-            List<RecentData> recentEntries = reportService.getRecentEntries();
-            return ResponseEntity.ok(recentEntries);
-        } catch (Exception e) {
+            log.error("Error fetching product price: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
-    @PostMapping("/entryData")
-    public ResponseEntity<String> addEntryData(@RequestBody @Valid EntryData entryData) {
+    @GetMapping
+    public ResponseEntity<Page<Sales>> getAllSales(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        log.info("Get all sales request with page: {} size: {}", page, size);
         try {
-            if (reportService.addData(entryData)) {
-                return ResponseEntity.ok("added data to sales collections and inventory");
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
+            Page<Sales> salesPage = reportService.getAllSales(page, size);
+            return ResponseEntity.ok(salesPage);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("failed exception");
+            log.error("Error fetching all sales: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<Page<Sales>> getSalesByDateRangeAndProduct(
+            @NotNull @RequestParam String fromDate,
+            @NotNull @RequestParam String toDate,
+            @RequestParam(required = false) String productName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        log.info("Get sales by date range request: from {} to {}, product: {}", fromDate, toDate, productName);
+        try {
+            LocalDateTime from = LocalDateTime.parse(fromDate, FORMATTER);
+            LocalDateTime to = LocalDateTime.parse(toDate, FORMATTER);
+            Page<Sales> salesPage;
+
+            if (productName != null && !productName.isEmpty()) {
+                salesPage = reportService.getSalesByDateRangeAndProduct(from, to, productName, page, size);
+                log.info("Fetched {} sales for product {}", salesPage.getNumberOfElements(), productName);
+            } else {
+                salesPage = reportService.getSalesByDateRange(from, to, page, size);
+                log.info("Fetched {} sales in date range", salesPage.getNumberOfElements());
+            }
+
+            return ResponseEntity.ok(salesPage);
+        } catch (Exception e) {
+            log.error("Error fetching sales by date range: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

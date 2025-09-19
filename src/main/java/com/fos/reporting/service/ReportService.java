@@ -6,19 +6,20 @@ import com.fos.reporting.entity.Sales;
 import com.fos.reporting.repository.CollectionsRepository;
 import com.fos.reporting.repository.InventoryLogRepository;
 import com.fos.reporting.repository.SalesRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ReportService {
 
@@ -32,15 +33,25 @@ public class ReportService {
 
     @Autowired
     private InventoryService inventoryService;
+
     @Autowired
     private InventoryLogRepository inventoryLogRepository;
 
     public float getLastClosing(String productName, String gun) {
-        Sales last = salesRepository.findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
-        return (last != null) ? last.getClosingStock() : 0f;
+        try {
+            log.info("Fetching last closing for product {} and gun {}", productName, gun);
+            Sales last = salesRepository.findTopByProductNameAndGunOrderByDateTimeDesc(productName, gun);
+            float closing = (last != null) ? last.getClosingStock() : 0f;
+            log.info("Last closing found: {}", closing);
+            return closing;
+        } catch (Exception e) {
+            log.error("Error fetching last closing: {}", e.getMessage(), e);
+            return 0f;
+        }
     }
 
     public boolean addToSales(EntrySaleDto entrySaleDto, String entryId) {
+        log.info("Adding sales entry: {} with entryId: {}", entrySaleDto, entryId);
         try {
             LocalDateTime entryDateTime = LocalDateTime.parse(entrySaleDto.getDate(), FORMATTER);
 
@@ -52,11 +63,9 @@ public class ReportService {
                 sales.setEmployeeId(entrySaleDto.getEmployeeId());
                 sales.setEntryId(entryId);
 
-
                 float opening = product.getOpening() == 0f
                         ? getLastClosing(product.getProductName(), product.getGun())
                         : product.getOpening();
-
                 float closing = product.getClosing();
                 float testing = product.getTesting();
 
@@ -66,22 +75,22 @@ public class ReportService {
 
                 BigDecimal saleVolume = BigDecimal.valueOf(closing - opening - testing);
                 sales.setSalesInLiters(saleVolume);
-
                 sales.setPrice(product.getPrice());
                 float amount = saleVolume.multiply(BigDecimal.valueOf(product.getPrice())).floatValue();
                 sales.setSalesInRupees(amount);
 
                 salesRepository.save(sales);
+                log.info("Saved sale: {}", sales);
             }
             return true;
         } catch (Exception e) {
-            // In production, replace with real logging
-            e.printStackTrace();
+            log.error("Failed to add sales entry: {}", e.getMessage(), e);
             return false;
         }
     }
 
     public boolean addToCollections(CollectionsDto dto, String entryId) {
+        log.info("Adding collections: {} with entryId: {}", dto, entryId);
         try {
             LocalDateTime dateTime = LocalDateTime.parse(dto.getDate(), FORMATTER);
             Collections collections = new Collections();
@@ -89,12 +98,9 @@ public class ReportService {
             collections.setDateTime(dateTime);
 
             List<Sales> salesByTime = salesRepository.findByDateTime(dateTime);
-            double expected = salesByTime.stream()
-                    .mapToDouble(Sales::getSalesInRupees).sum();
+            double expected = salesByTime.stream().mapToDouble(Sales::getSalesInRupees).sum();
 
-            double received = dto.getCashReceived()
-                    + dto.getPhonePay()
-                    + dto.getCreditCard();
+            double received = dto.getCashReceived() + dto.getPhonePay() + dto.getCreditCard();
 
             collections.setExpectedTotal(expected);
             collections.setReceivedTotal(received);
@@ -102,49 +108,74 @@ public class ReportService {
             collections.setEntryId(entryId);
 
             Collections saved = collectionsRepository.save(collections);
-
+            log.info("Collections saved successfully: {}", saved);
             return saved.getId() != null && saved.getId() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to add collections: {}", e.getMessage(), e);
             return false;
         }
     }
 
-
     public GetReportResponse getDashboard(GetReportRequest req) {
-        LocalDateTime from = LocalDateTime.parse(req.getFromDate(), FORMATTER);
-        LocalDateTime to = LocalDateTime.parse(req.getToDate(), FORMATTER);
+        log.info("Fetching dashboard report for request: {}", req);
+        try {
+            LocalDateTime from = LocalDateTime.parse(req.getFromDate(), FORMATTER);
+            LocalDateTime to = LocalDateTime.parse(req.getToDate(), FORMATTER);
 
-        List<Collections> collections = collectionsRepository.findByDateTimeBetween(from, to);
-        List<Sales> sales = salesRepository.findByDateTimeBetween(from, to);
+            List<Collections> collections = collectionsRepository.findByDateTimeBetween(from, to);
+            List<Sales> sales = salesRepository.findByDateTimeBetween(from, to);
 
-        double petrolLiters = getSalesVolume(sales, "petrol");
-        double dieselLiters = getSalesVolume(sales, "diesel");
+            double petrolLiters = getSalesVolume(sales, "petrol");
+            double dieselLiters = getSalesVolume(sales, "diesel");
 
-        double petrolExpected = getSalesAmount(sales, "petrol");
-        double dieselExpected = getSalesAmount(sales, "diesel");
+            double petrolExpected = getSalesAmount(sales, "petrol");
+            double dieselExpected = getSalesAmount(sales, "diesel");
 
-        double totalReceived = collections.stream()
-                .mapToDouble(Collections::getReceivedTotal)
-                .sum();
+            double totalReceived = collections.stream()
+                    .mapToDouble(Collections::getReceivedTotal)
+                    .sum();
 
-        GetReportResponse response = new GetReportResponse();
-        response.setActualCollection((float) totalReceived);
-        response.setDifference((float) (petrolExpected + dieselExpected - totalReceived));
-        response.setPetrol(ReportData.builder()
-                .saleInLtr((float) petrolLiters)
-                .expectedCollections((float) petrolExpected)
-                .build());
-        response.setDiesel(ReportData.builder()
-                .saleInLtr((float) dieselLiters)
-                .expectedCollections((float) dieselExpected)
-                .build());
+            GetReportResponse response = new GetReportResponse();
+            response.setActualCollection((float) totalReceived);
+            response.setDifference((float) (petrolExpected + dieselExpected - totalReceived));
+            response.setPetrol(ReportData.builder().saleInLtr((float) petrolLiters).expectedCollections((float) petrolExpected).build());
+            response.setDiesel(ReportData.builder().saleInLtr((float) dieselLiters).expectedCollections((float) dieselExpected).build());
 
-        return response;
+            log.info("Dashboard report generated successfully");
+            return response;
+        } catch (Exception e) {
+            log.error("Failed to fetch dashboard report: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to generate dashboard report", e);
+        }
     }
 
-    public List<Sales> getRecentSales() {
-        return salesRepository.findTop10ByOrderByDateTimeDesc();
+    @Transactional
+    public void deleteById(String entryId) {
+        log.info("Deleting entry with entryId: {}", entryId);
+        try {
+            salesRepository.deleteByEntryId(entryId);
+            collectionsRepository.deleteByEntryId(entryId);
+            inventoryLogRepository.deleteByEntryId(entryId);
+            log.info("Deleted entry successfully for entryId: {}", entryId);
+        } catch (Exception e) {
+            log.error("Failed to delete entry: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to delete data with entryId: " + entryId, e);
+        }
+    }
+
+    public boolean addData(EntryData entryData) {
+        String entryId = UUID.randomUUID().toString();
+        log.info("Adding full entryData with entryId: {}", entryId);
+        try {
+            this.addToSales(entryData.getEntrySaleDto(), entryId);
+            this.addToCollections(entryData.getCollectionsDto(), entryId);
+            inventoryService.recordInventoryTransaction(entryData.getInventoryDto(), entryId);
+            log.info("Entry data added successfully for entryId: {}", entryId);
+            return true;
+        } catch (Exception e) {
+            log.error("Failed to add entry data: {}", e.getMessage(), e);
+            return false;
+        }
     }
 
     private static double getSalesVolume(List<Sales> sales, String productName) {
@@ -162,73 +193,22 @@ public class ReportService {
                 .sum();
     }
 
-    @Transactional
-    public void deleteById(String entryId){
-        try {
-            salesRepository.deleteByEntryId(entryId);
-            collectionsRepository.deleteByEntryId(entryId);
-            inventoryLogRepository.deleteByEntryId(entryId);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to delete data with entryId: " + entryId, e);
-        }
-    }
-    public boolean addData(EntryData entryData) {
-        String entryId = UUID.randomUUID().toString();
-        this.addToSales(entryData.getEntrySaleDto(), entryId);
-        this.addToCollections(entryData.getCollectionsDto(), entryId);
-        inventoryService.recordInventoryTransaction(entryData.getInventoryDto(), entryId);
-        return true;
-    }
-    public EntryData getEntryById(String entryId) {
-        // Fetch all related entities from the database
-        List<Sales> salesList = salesRepository.findByEntryId(entryId);
-        List<Collections> collectionsList = collectionsRepository.findByEntryId(entryId);
-
-        // If there are no sales, the entry doesn't exist.
-        if (salesList.isEmpty()) {
-            throw new RuntimeException("No entry found with entryId: " + entryId);
-        }
-
-        // Map entities to DTOs
-        EntrySaleDto entrySaleDto = mapSalesToDto(salesList);
-
-        CollectionsDto collectionsDto = null;
-        if (collectionsList != null && !collectionsList.isEmpty()) {
-            // Assuming we only want the first result for a given entryId
-            Collections firstCollection = collectionsList.get(0);
-            collectionsDto = this.mapCollectionsToDto(firstCollection);
-        }
-        // Assemble the final EntryData object
-        EntryData entryData = new EntryData();
-        entryData.setEntrySaleDto(entrySaleDto);
-        entryData.setCollectionsDto(collectionsDto);
-
-        // Note: The current design has one inventory log per entry. This is a simplification.
-        // A more robust design would have one inventory log per product sold.
-        inventoryLogRepository.findByEntryId(entryId).stream().findFirst().ifPresent(log -> {
-            InventoryDto inventoryDto = new InventoryDto();
-            BeanUtils.copyProperties(log, inventoryDto);
-            inventoryDto.setProductId(log.getProduct().getId());
-            entryData.setInventoryDto(inventoryDto);
-        });
-
-        return entryData;
+    public Page<Sales> getAllSales(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return salesRepository.findAll(pageable);
     }
 
-    public List<RecentData> getRecentEntries() {
-        LocalDateTime sinceDate = LocalDateTime.now().minusDays(7);
-
-        // 1. Find all unique entry IDs in the last 10 days.
-        List<String> recentEntryIds = salesRepository.findDistinctEntryIdsByDateTimeAfter(sinceDate);
-
-        // 2. For each ID, get the full EntryData and collect it into a list.
-        return recentEntryIds.stream()
-                .map(entryId -> new RecentData(entryId, this.getEntryById(entryId)))
-                .collect(Collectors.toList());
+    public Page<Sales> getSalesByDateRange(LocalDateTime from, LocalDateTime to, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return salesRepository.findByDateTimeBetween(from, to, pageable);
     }
 
+    public Page<Sales> getSalesByDateRangeAndProduct(LocalDateTime from, LocalDateTime to, String productName, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("dateTime").descending());
+        return salesRepository.findByProductNameAndDateTimeBetween(productName, from, to, pageable);
+    }
+
+    // Map Sales to DTO
     private EntrySaleDto mapSalesToDto(List<Sales> salesList) {
         EntrySaleDto dto = new EntrySaleDto();
         Sales firstSale = salesList.get(0);
@@ -249,6 +229,7 @@ public class ReportService {
         dto.setProducts(products);
         return dto;
     }
+
     private CollectionsDto mapCollectionsToDto(Collections collections) {
         CollectionsDto dto = new CollectionsDto();
         BeanUtils.copyProperties(collections, dto);

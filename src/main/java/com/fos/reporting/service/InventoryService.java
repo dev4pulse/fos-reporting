@@ -9,6 +9,7 @@ import com.fos.reporting.entity.Product;
 import com.fos.reporting.repository.InventoryLogRepository;
 import com.fos.reporting.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class InventoryService {
 
@@ -110,6 +112,22 @@ public class InventoryService {
                 .stream()
                 .map(this::toRecordDto)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<InventoryRecordDto> getAllInventoryLogs() {
+        try {
+            log.info("Fetching all inventory logs");
+
+            return inventoryLogRepository.findAll()
+                    .stream()
+                    .map(this::toRecordDto)
+                    .collect(Collectors.toList());
+
+        } catch (Exception e) {
+            log.error("Error fetching all inventory logs", e);
+            throw new RuntimeException("Failed to fetch all inventory logs: " + e.getMessage(), e);
+        }
     }
 
     private InventoryRecordDto toRecordDto(InventoryLog log) {
