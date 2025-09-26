@@ -5,6 +5,8 @@ import com.fos.reporting.entity.Expense;
 import com.fos.reporting.repository.ExpenseRepository;
 import com.fos.reporting.service.ExpenseService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -17,6 +19,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ExpenseServiceImpl implements ExpenseService {
 
+    @Autowired
+    @Lazy
+    private ProfitLossService profitLossService;
+
     private final ExpenseRepository expenseRepository;
 
     public ExpenseServiceImpl(ExpenseRepository expenseRepository) {
@@ -28,6 +34,10 @@ public class ExpenseServiceImpl implements ExpenseService {
         try {
             Expense expense = mapToEntity(expenseDto);
             Expense saved = expenseRepository.save(expense);
+
+            // Trigger Profit/Loss recalculation automatically
+            profitLossService.calculateAndSaveProfitLoss();
+
             log.info("Expense created successfully with ID {}", saved.getId());
             return mapToDto(saved);
         } catch (Exception e) {

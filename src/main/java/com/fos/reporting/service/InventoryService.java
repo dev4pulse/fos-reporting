@@ -10,6 +10,7 @@ import com.fos.reporting.repository.InventoryLogRepository;
 import com.fos.reporting.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class InventoryService {
+
+    @Autowired
+    private ProfitLossService profitLossService;
 
     private final InventoryLogRepository inventoryLogRepository;
     private final ProductRepository productRepository;
@@ -100,6 +104,10 @@ public class InventoryService {
         log.setEntryId(entryId);
 
         InventoryLog savedLog = inventoryLogRepository.save(log);
+
+        // Recalculate Profit/Loss after inventory change
+        profitLossService.calculateAndSaveProfitLoss();
+
         return toRecordDto(savedLog);
     }
 

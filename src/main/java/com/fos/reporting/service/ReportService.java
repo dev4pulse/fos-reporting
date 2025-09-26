@@ -24,6 +24,9 @@ import java.util.stream.Collectors;
 public class ReportService {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    @Autowired
+    private ProfitLossService profitLossService;
+
 
     @Autowired
     private SalesRepository salesRepository;
@@ -81,6 +84,10 @@ public class ReportService {
 
                 salesRepository.save(sales);
                 log.info("Saved sale: {}", sales);
+
+                // Trigger Profit/Loss recalculation automatically
+                profitLossService.calculateAndSaveProfitLoss();
+
             }
             return true;
         } catch (Exception e) {
@@ -109,6 +116,10 @@ public class ReportService {
 
             Collections saved = collectionsRepository.save(collections);
             log.info("Collections saved successfully: {}", saved);
+
+            // Trigger Profit/Loss recalculation automatically
+            profitLossService.calculateAndSaveProfitLoss();
+
             return saved.getId() != null && saved.getId() > 0;
         } catch (Exception e) {
             log.error("Failed to add collections: {}", e.getMessage(), e);
