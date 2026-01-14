@@ -42,4 +42,8 @@ public class BorrowerDto {
 
     @Size(max = 255)
     private String email;
+
+    // **Add these two fields**
+    private Double duePaid;
+    private Double extraBorrowed;
 }

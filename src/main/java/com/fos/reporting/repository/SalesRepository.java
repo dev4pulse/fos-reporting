@@ -2,7 +2,11 @@ package com.fos.reporting.repository;
 
 import com.fos.reporting.entity.Sales;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -15,4 +19,21 @@ public interface SalesRepository extends JpaRepository<Sales, Long> {
     List<Sales> findByDateTime(LocalDateTime dateTime);
 
     List<Sales> findByDateTimeBetween(LocalDateTime fromDate, LocalDateTime toDate);
+    List<Sales> findTop10ByOrderByDateTimeDesc();
+    void deleteByEntryId(String entryId);
+    List<Sales> findByEntryId(String entryId);
+
+    @Query("SELECT s.entryId FROM Sales s WHERE s.dateTime >= :sinceDate GROUP BY s.entryId ORDER BY MAX(s.dateTime) DESC")
+    List<String> findDistinctEntryIdsByDateTimeAfter(@Param("sinceDate") LocalDateTime sinceDate);
+
+    Page<Sales> findByDateTimeBetween(LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
+
+
+    Page<Sales> findByProductNameAndDateTimeBetween(
+            String productName,
+            LocalDateTime from,
+            LocalDateTime to,
+            Pageable pageable
+    );
+
 }

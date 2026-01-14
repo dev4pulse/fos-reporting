@@ -32,4 +32,5 @@ public class InventoryLog {
     private LocalDateTime transactionDate;
 
     private Long employeeId;
+    private String entryId;
 }

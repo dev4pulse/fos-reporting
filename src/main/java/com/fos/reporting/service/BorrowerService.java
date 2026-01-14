@@ -2,8 +2,11 @@ package com.fos.reporting.service;
 
 import com.fos.reporting.domain.BorrowerDto;
 import com.fos.reporting.entity.Borrower;
+import com.fos.reporting.repository.BorrowerHistoryRepository;
 import com.fos.reporting.repository.BorrowerRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -15,52 +18,95 @@ import java.util.stream.Collectors;
 @Service
 public class BorrowerService {
 
-    private final BorrowerRepository borrowerRepository;
+    private static final Logger log = LoggerFactory.getLogger(BorrowerService.class);
 
-    // Use constructor injection - it's safer and better for testing.
-    public BorrowerService(BorrowerRepository borrowerRepository) {
+    private final BorrowerRepository borrowerRepository;
+    private final BorrowerHistoryService historyService;
+    private final BorrowerHistoryRepository historyRepository;
+
+    public BorrowerService(BorrowerRepository borrowerRepository,
+                           BorrowerHistoryService historyService,
+                           BorrowerHistoryRepository historyRepository) {
         this.borrowerRepository = borrowerRepository;
+        this.historyService = historyService;
+        this.historyRepository = historyRepository;
     }
 
     @Transactional
     public BorrowerDto createBorrower(BorrowerDto dto) {
-        if (dto.getBorrowDate() == null) {
-            dto.setBorrowDate(LocalDateTime.now());
+        try {
+            if (dto.getBorrowDate() == null) {
+                dto.setBorrowDate(LocalDateTime.now());
+            }
+            Borrower borrower = toEntity(dto);
+            Borrower savedBorrower = borrowerRepository.save(borrower);
+            log.info("Borrower created successfully: {}", savedBorrower);
+            return toDto(savedBorrower);
+        } catch (Exception e) {
+            log.error("Error creating borrower: {}", dto, e);
+            throw e;
         }
-
-        Borrower borrower = toEntity(dto);
-        Borrower savedBorrower = borrowerRepository.save(borrower);
-        return toDto(savedBorrower);
     }
 
     @Transactional
     public BorrowerDto updateBorrower(Long id, BorrowerDto dto) {
-        Borrower existingBorrower = borrowerRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Borrower not found with id: " + id));
+        try {
+            Borrower existingBorrower = borrowerRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Borrower not found with id: " + id));
 
-        // Update properties from the DTO
-        updateEntityFromDto(existingBorrower, dto);
+            historyService.saveHistory(existingBorrower, dto.getDuePaid(), dto.getExtraBorrowed());
 
-        Borrower updatedBorrower = borrowerRepository.save(existingBorrower);
-        return toDto(updatedBorrower);
+            updateEntityFromDto(existingBorrower, dto);
+            Borrower updatedBorrower = borrowerRepository.save(existingBorrower);
+            log.info("Borrower updated successfully: {}", updatedBorrower);
+            return toDto(updatedBorrower);
+        } catch (Exception e) {
+            log.error("Error updating borrower with ID {}: {}", id, dto, e);
+            throw e;
+        }
     }
 
     @Transactional(readOnly = true)
     public List<BorrowerDto> findBorrowers(String customerName) {
-        List<Borrower> borrowers;
-        if (StringUtils.hasText(customerName)) {
-            borrowers = borrowerRepository.findByCustomerNameContainingIgnoreCaseOrderByBorrowDateDesc(customerName);
-        } else {
-            // Use the new sorted method for a consistent default order
-            borrowers = borrowerRepository.findAllByOrderByBorrowDateDesc();
+        try {
+            List<Borrower> borrowers;
+            if (StringUtils.hasText(customerName)) {
+                borrowers = borrowerRepository.findByCustomerNameContainingIgnoreCaseOrderByBorrowDateDesc(customerName);
+            } else {
+                borrowers = borrowerRepository.findAllByOrderByBorrowDateDesc();
+            }
+            log.info("Fetched {} borrowers", borrowers.size());
+            return borrowers.stream()
+                    .map(this::toDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error fetching borrowers with filter: {}", customerName, e);
+            throw e;
         }
-        return borrowers.stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
     }
 
-    // --- Helper Methods for Mapping ---
+    @Transactional
+    public void deleteBorrower(Long id) {
+        try {
+            Borrower borrower = borrowerRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Borrower not found with id: " + id));
 
+            // Step 1: Delete borrower history
+            historyRepository.deleteAll(
+                    historyRepository.findByBorrowerOrderByUpdatedAtDesc(borrower)
+            );
+
+            // Step 2: Delete borrower
+            borrowerRepository.delete(borrower);
+
+            log.info("Borrower and related history deleted successfully for ID: {}", id);
+        } catch (Exception e) {
+            log.error("Error deleting borrower with ID: {}", id, e);
+            throw e;
+        }
+    }
+
+    // --- Helper Methods ---
     private BorrowerDto toDto(Borrower entity) {
         BorrowerDto dto = new BorrowerDto();
         dto.setId(entity.getId());
@@ -80,7 +126,6 @@ public class BorrowerService {
 
     private Borrower toEntity(BorrowerDto dto) {
         Borrower entity = new Borrower();
-        // We don't set the ID here, it will be generated on save.
         updateEntityFromDto(entity, dto);
         return entity;
     }
